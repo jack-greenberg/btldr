@@ -9,9 +9,7 @@
 #include "config.h"
 #include "type.h"
 
-void main(void) {
-
-    SystemInit();
+int main(void) {
 
     for (;;) {
 
