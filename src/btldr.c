@@ -9,8 +9,6 @@
 
 #include "can.h"
 
-#define CAN_NUM_MOBS (6)
-
 /*
  * MCUSR := MCU Status Register
  */
@@ -32,6 +30,8 @@ int main(void)
      *   - Brown-out reset
      *   - External reset (hardware reset on the ~RESET pin)
      *   - Power-on reset
+     *
+     * In all of these cases, we'll just want to jump to the application
      */
     if (MCUSR != 0) {
         start_app();
