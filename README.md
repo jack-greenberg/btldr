@@ -1,9 +1,47 @@
-# Hello Manu
+# BTLDR
 
-You'll see that I am rewriting the bootloader that we found to be a bit more readable and more specific to just our chip.
+**CAN Bootloader for ATMega16m1**
 
-I could use your help rewriting the libraries:
 
-- CAN library (or maybe just want to use the Formula CAN lib)
-- CAN ISP library (like the sort of UDS thing)
-- Flash library
+
+This repository holds the code for the CAN bootloader for the ATMega16m1 microcontroller.
+
+The code lives in `/src/`.
+`main.c` contains a "dummy" image for the microcontroller: a simple blinky program.
+`btldr.c` is the bootloader image.
+`config.h` should be used for any configuration variables.
+
+`/old/` contains the bootloader we are basing ours off of, which comes from Atmel.
+
+`/lib/` contains the libraries that we are writing. These are the libraries:
+
+* __CAN_drv__: CAN driver (interfaces with the registers and such)
+* __CAN_lib__: Provides higher-level interface for CAN, like `send` and `get_message`
+* __CAN_isp__: Defines CAN messages that are used to program the target board
+* __ISP__: In-system-programming library for programming
+* __Flash_drv__: Drivers for interfacing with flash memory
+* __Flash_lib__: Library (higher level) for doing flashing
+
+## Contributing
+
+Please help us!
+Below you'll see the __ToDo__ section.
+To make a contribution, make your changes locally and submit a PR.
+As a part of your PR, change the `[ ]` in your todo item to a `[x]` to indicate that it has been done.
+Please do one `[x]` per PR.
+
+## ToDo
+
+- [ ] CAN
+    - [ ] Driver
+    - [ ] Library
+    - [ ] ISP command library
+- [ ] Flash
+    - [ ] Driver
+    - [ ] Library
+- [ ] ISP Library
+- [ ] Blinky (`main.c`)
+- [ ] Build system (improving the Makefile)
+- [ ] Documentation
+- [ ] Main bootloader (`btldr.c`)
+    - This is mostly done, and @greenberg-jack is working on it
