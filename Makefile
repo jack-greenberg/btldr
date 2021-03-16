@@ -15,9 +15,7 @@ BUILD_DIR = build
 
 # Libraries
 LIB_DIR = lib
-LIBS = (
-	can
-)
+# LIBS = $(wildcard $(LIB_DIR)/*.c)
 
 # Toolchain
 PREFIX = avr-
@@ -28,8 +26,8 @@ OBJCOPY = $(PREFIX)objcopy
 AVRDUDE = avrdude
 
 # Flags
-CFLAGS = -mmcu=$(MCU) -g -Os -Wall -Wunused -Werror
-LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map --gc-sections -ffunction-sections -fdata-sections
+CFLAGS = -mmcu=$(MCU) -g -Os -Wall -Wunused -Werror -I $(LIB_DIR)
+LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map --build-id --gc-sections -ffunction-sections -fdata-sections -I $(LIB_DIR)
 AVRDUDE_FLAGS = -p $(MCU) -c $(PROGRAMMER) -P usb -v
 
 # Fuses
@@ -43,14 +41,15 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 .PHONY: clean fuses app_flash btldr_flash bootloader_size
 
 all: $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(BOOTLOADER).hex
+	@echo To set fuses run `make fuses`
 	@echo To flash bootloader run `make btldr_flash`
 	@echo To flash app run `make app_flash`
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c  $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.o
-	$(CC) $(CFLAGS) $< -o $@
+$(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.o $(LIB_DIR)/%.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@

@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include "can.h"
+#include <stdint.h>
 
 inline void Can_init(void) {
     // Reset Can peripheral
@@ -16,16 +17,17 @@ inline void Can_init(void) {
         CANPAGE = (mob << 4);
         CANSTMOB = 0x00;
         CANCDMOB = 0x00;
-        CANIDT4 = 0x00;
-        CANIDT3 = 0x00;
-        CANIDT2 = 0x00;
-        CANIDT1 = 0x00;
-        CANIDM4 = 0x00;
-        CANIDM3 = 0x00;
-        CANIDM2 = 0x00;
-        CANIDM1 = 0x00;
     }
 
     // Re-enable CAN
     CANGCON = 1 << ENASTB;
 }
+
+// void can_clear_all_mob(void) {
+//     uint8_t mob;
+//     for (mob = 0; mob < CAN_NUM_MOBS; mob++) {
+//         CANPAGE = (mob << 4);
+//         CANSTMOB = 0x00;
+//         CANCDMOB = 0x00;
+//     }
+// }
