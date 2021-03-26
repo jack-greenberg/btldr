@@ -1,8 +1,9 @@
 #include <avr/io.h>
 #include "can.h"
 #include <stdint.h>
+#include <stddef.h>
 
-inline void Can_init(void) {
+void Can_init(void) {
     // Reset Can peripheral
     CANGCON = 1 << SWRES;
 

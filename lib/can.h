@@ -1,3 +1,5 @@
 #include <avr/io.h>
 
-inline void Can_init(void);
+#define CAN_NUM_MOBS (6)
+
+void Can_init(void);

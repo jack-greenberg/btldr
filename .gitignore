@@ -1,4 +1,2 @@
+.DS_store
 build/
-*.elf
-*.hex
-*.o
