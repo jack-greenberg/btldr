@@ -7,15 +7,17 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "config.h"
-#include "type.h"
+
+static void SystemInit(void) {
+    sei();
+}
 
 int main(void) {
+
+    SystemInit();
 
     for (;;) {
 
     }
 }
 
-void SystemInit(void) {
-    sei();
-}

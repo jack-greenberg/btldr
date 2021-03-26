@@ -2,8 +2,6 @@
 
 **CAN Bootloader for ATMega16m1**
 
-
-
 This repository holds the code for the CAN bootloader for the ATMega16m1 microcontroller.
 
 The code lives in `/src/`.

@@ -23,3 +23,6 @@ SECTIONS {
         *(COMMON)
     } > ram
 }
+
+__bootrom_start__ = ORIGIN(bootrom);
+__bootrom_size__ = LENGTH(bootrom);
