@@ -2,11 +2,10 @@
  * @file btldr.c
  * @brief Main CAN Bootloader
  */
-#include <stdint.h>
+#include <inttypes.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
-
 #include "can.h"
 
 /*
@@ -18,7 +17,7 @@ void (*start_app)(void) = 0x0000;
 int main(void)
 {
     // First, disable interrupts
-    asm("cli");
+    cli();
 
     uint8_t rst = MCUSR;
     MCUSR = 0;
