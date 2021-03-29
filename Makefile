@@ -13,7 +13,8 @@ SRCS_BOOT = src/btldr.c
 
 SRCS_SHARED = \
 	lib/can.c \
-	lib/can_isp.c
+	lib/can_isp.c \
+	lib/flash.c
 
 INCLUDES += lib
 
@@ -33,6 +34,10 @@ CFLAGS = -mmcu=$(MCU) -g -Os -Wall -Wunused -Werror
 LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map -static -nostartfiles
 AVRDUDE_FLAGS = -p $(MCU) -c $(PROGRAMMER) -P usb -v
 
+GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
+
+DEFINES += GIT_SHA=$(GIT_SHA)
+CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
 # Fuses
