@@ -1,6 +1,6 @@
 #include <avr/io.h>
 #include "can.h"
-#include <stdint.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 void Can_init(void) {
