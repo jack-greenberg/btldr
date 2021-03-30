@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define CAN_NUM_MOBS (6)
+
 typedef enum {
     CAN_DRV_ST_OK,
     CAN_DRV_ST_ERROR,
