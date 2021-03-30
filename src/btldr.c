@@ -18,7 +18,6 @@ void (*start_app)(void) = 0x0000;
 int main(void)
 {
     // First, disable interrupts
-    // asm("cli");
     __disable_interrupt();
 
     uint8_t rst = MCUSR;
@@ -33,7 +32,7 @@ int main(void)
      *
      * In all of these cases, we'll just want to jump to the application
      */
-    if (MCUSR != 0) {
+    if (rst != 0) {
         start_app();
     }
 

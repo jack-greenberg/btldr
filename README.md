@@ -2,8 +2,6 @@
 
 **CAN Bootloader for ATMega16m1**
 
-
-
 This repository holds the code for the CAN bootloader for the ATMega16m1 microcontroller.
 
 The code lives in `/src/`.
@@ -45,3 +43,12 @@ Please do one `[x]` per PR.
 - [ ] Documentation
 - [ ] Main bootloader (`btldr.c`)
     - This is mostly done, and @greenberg-jack is working on it
+
+## Notes
+
+Page 80:
+
+> Note: If Interrupt Vectors are placed in the Boot Loader section and Boot Lock bit BLB02 is
+> programmed, interrupts are disabled while executing from the Application section. If
+> Interrupt Vectors are placed in the Application section and Boot Lock bit BLB12 is programmed,
+> interrupts are disabled while executing from the Boot Loader section.

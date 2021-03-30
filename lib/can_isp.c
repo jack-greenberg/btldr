@@ -1,4 +1,11 @@
+#include <stdint.h>
+#include "can_isp.h"
 
-int Can_ISP_Task(void) {
-    uint8_t i;
+CAN_ISP_status Can_ISP_Task(void) {
+    CAN_ISP_status st = CAN_ISP_SUCCESS;
+    
+    // switch () {
+    // }
+
+    return st;
 }
