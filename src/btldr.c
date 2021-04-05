@@ -2,11 +2,13 @@
  * @file btldr.c
  * @brief Main CAN Bootloader
  */
-#include <inttypes.h>
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
 #include <avr/wdt.h>
-#include "can.h"
+#include <inttypes.h>
+
+#include "can_isp.h"
+#include "can_lib.h"
 
 /*
  * MCUSR := MCU Status Register
@@ -14,8 +16,7 @@
 
 void (*start_app)(void) = 0x0000;
 
-int main(void)
-{
+int main(void) {
     // First, disable interrupts
     cli();
 
@@ -32,10 +33,13 @@ int main(void)
      * In all of these cases, we'll just want to jump to the application
      */
     if (rst != 0) {
+        MCUSR = rst;
         start_app();
     }
 
-    Can_init();
-    // Can_ISP_init();
-    // while(Can_ISP_task());
+    can_init();
+    while (can_isp_task())
+        ;
+
+    // TODO: Verification? But if JUMP is a CAN command?
 }
