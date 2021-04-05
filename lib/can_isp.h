@@ -1,22 +1,21 @@
-#include <stdint.h>
+#pragma once
 
 /*
  * CAN ISP Commands
  */
-// struct CAN_ISP_command {
-// 
-// }
-// #define CAN_ISP_GET_VERSION (0x00)
-// #define CAN_ISP_GET_ID (0x01)
-// #define CAN_ISP_SELECT_NODE (0x02)
-// #define CAN_ISP_READ_MEMORY (0x10)
-// #define CAN_ISP_WRITE_MEMORY (0x11)
-// #define CAN_ISP_GO (0x20)
-// #define CAN_ISP_ERASE (0x30)
-// #define CAN_ISP_WRITE_PROTECT (0x40)
-// #define CAN_ISP_WRITE_UNPROTECT (0x41)
 
 typedef enum {
-    CAN_ISP_SUCCESS,
-    CAN_ISP_ERROR,
-} CAN_ISP_status;
+    CAN_ISP_ST_SUCCESS,
+    CAN_ISP_ST_ERROR,
+} CAN_isp_status;
+
+// TODO Determine final command structure
+typedef enum {
+    NO_OPERATION = 0x00u,
+    SELECT_NODE = 0x01u,
+    PROG_START = 0x02u,
+    DATA = 0x03u,
+    READ = 0x04u,
+    START_APP = 0x05u,
+    ERROR = 0xFFu,
+} command_t;
