@@ -52,3 +52,9 @@ Page 80:
 > programmed, interrupts are disabled while executing from the Application section. If
 > Interrupt Vectors are placed in the Application section and Boot Lock bit BLB12 is programmed,
 > interrupts are disabled while executing from the Boot Loader section.
+
+We need to decide some things: on reset, should the bootloader execute first? Or do we go to the application? Either one is ok, but if we go to the bootloader first, we can just check to see why there was a reset, and if it wasn't a bootloader request, we jump to the application.
+
+Do we need to disable interrupts? Where should the interrupts be located?
+
+
