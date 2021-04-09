@@ -6,9 +6,8 @@ PROGRAMMER = usbasp
 BOOTSTART = 0x3000
 
 # Structure
+TARGET = btldr
 BUILD_DIR = build
-
-SRCS = src/main.c
 
 SRCS_BOOT = \
 			src/btldr.c \
@@ -23,7 +22,6 @@ SRCS_SHARED = \
 
 INCLUDES += lib
 
-SRCS_APP += $(SRCS_SHARED)
 SRCS_BOOT += $(SRCS_SHARED)
 
 # Toolchain
@@ -32,6 +30,7 @@ CC      = $(PREFIX)gcc
 LD      = $(PREFIX)ld
 AR      = $(PREFIX)ar
 OBJCOPY = $(PREFIX)objcopy
+SIZE    = $(PREFIX)size
 AVRDUDE = avrdude
 
 # Flags
@@ -50,9 +49,7 @@ LDFLAGS = \
 		  -static \
 		  -nostartfiles \
 		  -Wl,--build-id \
-		  -Wl,--section-start=.text=$(BOOTSTART)\
-		  # -Wl,-dM \
-		  # -T atmega16m1.ld
+		  -Wl,--section-start=.text=$(BOOTSTART)
 
 AVRDUDE_FLAGS = \
 				-p $(MCU) \
@@ -75,20 +72,12 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 
 .PHONY: all
 
-all: $(BUILD_DIR)/$(PROJECT).bin
+all: $(BUILD_DIR)/$(PROJECT).bin size
 
-# Combines the binaries
-$(BUILD_DIR)/$(PROJECT).bin: $(BUILD_DIR)/$(PROJECT)-app.bin $(BUILD_DIR)/$(PROJECT)-bootloader.bin
-	@cat $^ > $@
-
-$(BUILD_DIR)/$(PROJECT)-%.bin: $(BUILD_DIR)/$(PROJECT)-%.elf
+$(BUILD_DIR)/$(PROJECT).bin: $(BUILD_DIR)/$(PROJECT).elf
 	$(OBJCOPY) $^ $@ -O binary
 
-$(BUILD_DIR)/$(PROJECT)-app.elf: $(SRCS_APP)
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-
-$(BUILD_DIR)/$(PROJECT)-bootloader.elf: $(SRCS_BOOT)
+$(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
@@ -98,11 +87,9 @@ $(BUILD_DIR)/$(PROJECT)-bootloader.elf: $(SRCS_BOOT)
 # app_flash: $(BUILD_DIR)/$(APP).hex
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$<:i
 
-# btldr_flash: $(BUILD_DIR)/$(BOOTLOADER).hex
-#   $(AVRDUDE) $(AVRDUDE_FLAGS) -U $(LOCKBITS_UNLOCK) -U flash:w:$<:i -U $(LOCKBITS_LOCK)
-
-# bootloader_size: $(BUILD_DIR)/$(BOOTLOADER).elf
-#   $(AVRSIZE) --format=avr --mcu=$(MCU) $<
+.PHONY: size
+size: $(BUILD_DIR)/$(PROJECT).elf
+	$(SIZE) --format=avr --mcu=$(MCU) $<
 
 .PHONY: clean
 clean:
