@@ -1,0 +1,6 @@
+ecus:
+  - name: brakelight_bspd
+    description: |
+      Handles BSPD fault conditions and brake light.
+    designer: Jack Greenberg <jgreenberg@olin.edu>
+    node_id: 0

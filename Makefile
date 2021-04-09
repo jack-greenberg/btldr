@@ -8,6 +8,8 @@ BOOTSTART = 0x3000
 # Structure
 TARGET = btldr
 APP = main
+CLIENT = focan
+
 BUILD_DIR = build
 
 SRCS_APP = \
@@ -29,6 +31,9 @@ SRCS_BOOT = \
 SRCS_SHMEM = \
 			 lib/shared_mem.c
 
+SRCS_CLIENT = \
+			  client/main.c
+
 SRCS_SHARED = \
 			  lib/image.c \
 			  lib/can_drv.c \
@@ -42,6 +47,7 @@ INCLUDES += lib src
 
 SRCS_APP += lib/crc32.c lib/debug.c
 SRCS_BOOT += $(SRCS_SHARED)
+# SRCS_CLIENT += $(SRCS_SHARED)
 
 LDSCRIPT=atmega16m1.ld
 
@@ -64,6 +70,12 @@ CFLAGS = \
 		 -fno-jump-tables \
 		 -ffunction-sections \
 		 -Werror
+
+CFLAGS_CLIENT = \
+				-Wall \
+				-Werror \
+				-O2 \
+				-Wno-parentheses
 
 LDFLAGS = \
 		  -mmcu=$(MCU) \
@@ -103,8 +115,11 @@ all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT)
 $(BUILD_DIR)/%.eep: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $(EEPFLAGS) -O ihex $< $@
 
-$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf client
 	$(OBJCOPY) $< $@ -R .eeprom -O ihex
+
+.PHONY: client
+client: $(BUILD_DIR)/$(CLIENT)
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf patch_header
 	$(OBJCOPY) -O binary -R .eeprom $< $@
@@ -133,6 +148,9 @@ flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(PROJEC
 		-U $(LOCKBITS_LOCK) \
 		-U flash:w:$(BUILD_DIR)/$(APP).bin:r
 
+$(BUILD_DIR)/$(CLIENT): $(SRCS_CLIENT)
+	@mkdir -p $(BUILD_DIR)
+	gcc $(CFLAGS_CLIENT) $^ -o $@
 
 %.size: %
 	nm --size-sort --print-size -td $< | sort >> $@
