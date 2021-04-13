@@ -4,7 +4,6 @@
  */
 #include <avr/interrupt.h>
 #include <avr/io.h>
-#include <avr/wdt.h>
 #include <inttypes.h>
 
 #include "can_isp.h"
@@ -14,7 +13,7 @@
  * MCUSR := MCU Status Register
  */
 
-void (*start_app)(void) = 0x0000;
+// void (*start_app)(void) = 0x0000;
 
 int main(void) {
     // First, disable interrupts

@@ -17,6 +17,7 @@ SRCS_SHARED = \
 	lib/can_drv.c \
 	lib/can_lib.c \
 	lib/can_isp.c \
+	lib/can_isp_commands.c \
 	lib/flash.c \
 	lib/crc32.c
 
