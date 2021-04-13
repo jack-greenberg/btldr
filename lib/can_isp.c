@@ -1,20 +1,12 @@
-#include "can_isp.h"
-#include "can_lib.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include "can_isp.h"
+#include "can_lib.h"
 
-static bool is_programming = false;
+void (*start_app)(void) = 0x0000;
 
-// Current (unprogrammed) memory address
-static uint16_t program_memory_address;
-
-// Number of bytes remaining to program
-static uint16_t program_memory_num_bytes;
-
-// static CAN_status can_isp_respond(Can_msg* msg) {
-// 
-// }
+bool is_programming = false;
 
 CAN_isp_status can_isp_task(void) {
     CAN_isp_status st = CAN_ISP_ST_SUCCESS;
@@ -44,27 +36,26 @@ CAN_isp_status can_isp_task(void) {
         }
     }
 
+    if (msg.id != CAN_ID_PROG_START && !is_programming) {
+        start_app();
+    }
+
     switch (msg.id) {
 
         case CAN_ID_NODE_SELECT: {
-            if (msg.data[0] == NODE_ID) {
-                is_programming = true;
-            } else {
-                // Jump to application? Stall?
-            }
+            can_node_select(msg.data);
             break;
         }
 
         case CAN_ID_PROG_START: {
-            uint16_t start_addr = (msg.data[1] << 8) | msg.data[2];
-            uint16_t end_addr = (msg.data[3] << 8) | msg.data[4];
-            program_memory_address = start_addr;
-            program_memory_num_bytes = (end_addr - start_addr) + 1;
+            can_prog_start(msg.data);
             break;
         }
 
-        case CAN_ID_DATA:
+        case CAN_ID_DATA: {
+            can_data(msg.data, msg.length);
             break;
+        }
 
         case CAN_ID_READ:
             break;
