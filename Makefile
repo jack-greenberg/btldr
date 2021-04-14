@@ -80,7 +80,7 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 
 .PHONY: all
 
-all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).bin.size $(BUILD_DIR)/$(APP).bin.size
+all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).bin.size $(BUILD_DIR)/$(APP).bin.size patch_header
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $^ $@ -O ihex
@@ -95,6 +95,10 @@ $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 $(BUILD_DIR)/$(APP).elf: $(SRCS_APP)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+patch_header: scripts/patch_header.c
+	@mkdir -p $(BUILD_DIR)
+	gcc -DDEBUG -o $(BUILD_DIR)/$@ $^
 
 # fuses:
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U $(LFUSE) -U $(HFUSE) -U $(EFUSE)
