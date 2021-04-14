@@ -7,11 +7,16 @@ BOOTSTART = 0x3000
 
 # Structure
 TARGET = btldr
+APP = main
 BUILD_DIR = build
+
+SRCS_APP = \
+		   src/main.c \
+		   src/image.c
 
 SRCS_BOOT = \
 			src/btldr.c \
-			# src/image.c
+			src/image.c
 
 SRCS_SHARED = \
 	lib/can_drv.c \
@@ -24,6 +29,8 @@ SRCS_SHARED = \
 INCLUDES += lib
 
 SRCS_BOOT += $(SRCS_SHARED)
+
+LDSCRIPT=atmega16m1.ld
 
 # Toolchain
 PREFIX = avr-
@@ -50,7 +57,7 @@ LDFLAGS = \
 		  -static \
 		  -nostartfiles \
 		  -Wl,--build-id \
-		  -Wl,--section-start=.text=$(BOOTSTART)
+		  -T $(LDSCRIPT)
 
 AVRDUDE_FLAGS = \
 				-p $(MCU) \
@@ -59,7 +66,7 @@ AVRDUDE_FLAGS = \
 
 GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
 
-DEFINES += GIT_SHA=$(GIT_SHA)
+DEFINES += GIT_SHA=$(GIT_SHA) F_CPU='16000000'
 CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
@@ -73,12 +80,19 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 
 .PHONY: all
 
-all: $(BUILD_DIR)/$(PROJECT).bin size
+all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).bin.size $(BUILD_DIR)/$(APP).bin.size
 
-$(BUILD_DIR)/$(PROJECT).bin: $(BUILD_DIR)/$(PROJECT).elf
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
+	$(OBJCOPY) $^ $@ -O ihex
+
+$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $^ $@ -O binary
 
 $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--section-start=.text=$(BOOTSTART) $^ -o $@
+
+$(BUILD_DIR)/$(APP).elf: $(SRCS_APP)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
@@ -89,8 +103,8 @@ $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$<:i
 
 .PHONY: size
-size: $(BUILD_DIR)/$(PROJECT).elf
-	$(SIZE) --format=avr --mcu=$(MCU) $<
+%.size: %
+	stat $< --printf "%s bytes\n"
 
 .PHONY: clean
 clean:

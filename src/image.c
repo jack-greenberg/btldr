@@ -18,11 +18,11 @@ const image_hdr_t *image_get_header(void) {
 }
 
 int image_validate(const image_hdr_t *hdr) {
-    const void *image_addr = &__data_start;
-    image_addr += sizeof(image_hdr_t);
-    uint32_t length = hdr->image_size;
-    uint32_t crc;
-    crc32(image_addr, (size_t)length, &crc);
+    // const void *image_addr = &__data_start;
+    // image_addr += sizeof(image_hdr_t);
+    // uint32_t length = hdr->image_size;
+    // uint32_t crc;
+    // crc32(image_addr, (size_t)length, &crc);
 
     return 1;
 }
