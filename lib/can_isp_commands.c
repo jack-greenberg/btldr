@@ -46,14 +46,14 @@ void can_data(uint8_t* data, uint8_t length) {
     }
 }
 void can_read(uint8_t* data) {
-
 }
 void can_start_app(uint8_t* data) {
-
+    // TODO: Validate
+    start_app();
 }
 void can_validate(uint8_t* data) {
-
+    // TODO: Validate, but needed if we are doing it in can_start_app?
 }
 void can_version(uint8_t* data) {
-
+    // Return metadata
 }
