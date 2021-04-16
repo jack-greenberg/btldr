@@ -2,26 +2,26 @@
  * Run right before flashing
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <sys/stat.h>
 #include <time.h>
+
 #include "../src/image.h"
 
 uint32_t crc32_for_byte(uint32_t r) {
-  for(int j = 0; j < 8; ++j)
-    r = (r & 1? 0: (uint32_t)0xEDB88320L) ^ r >> 1;
-  return r ^ (uint32_t)0xFF000000L;
+    for (int j = 0; j < 8; ++j)
+        r = (r & 1 ? 0 : (uint32_t)0xEDB88320L) ^ r >> 1;
+    return r ^ (uint32_t)0xFF000000L;
 }
 
-void crc32(const void *data, size_t n_bytes, uint32_t* crc) {
-  static uint32_t table[0x100];
-  if(!*table)
-    for(size_t i = 0; i < 0x100; ++i)
-      table[i] = crc32_for_byte(i);
-  for(size_t i = 0; i < n_bytes; ++i)
-    *crc = table[(uint8_t)*crc ^ ((uint8_t*)data)[i]] ^ *crc >> 8;
+void crc32(const void* data, size_t n_bytes, uint32_t* crc) {
+    static uint32_t table[0x100];
+    if (!*table)
+        for (size_t i = 0; i < 0x100; ++i) table[i] = crc32_for_byte(i);
+    for (size_t i = 0; i < n_bytes; ++i)
+        *crc = table[(uint8_t)*crc ^ ((uint8_t*)data)[i]] ^ *crc >> 8;
 }
 
 int main(int argc, char** argv) {
@@ -81,7 +81,8 @@ int main(int argc, char** argv) {
     uint16_t image_size = image_size_total - image_hdr_size;
 
 #ifdef DEBUG
-    printf("Total image size: %ld\nImage size w/o header: %d\n", image_size_total, image_size);
+    printf("Total image size: %ld\nImage size w/o header: %d\n",
+           image_size_total, image_size);
 #endif
 
     image_hdr.image_size = image_size;
@@ -89,7 +90,7 @@ int main(int argc, char** argv) {
     // CRC
     fseek(fp, image_hdr_size, SEEK_SET);
 
-    uint8_t* image = (uint8_t*) malloc(image_size);
+    uint8_t* image = (uint8_t*)malloc(image_size);
     fread(image, image_size, 1, fp);
 
     uint32_t crc;
