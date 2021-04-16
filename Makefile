@@ -98,4 +98,4 @@ clean:
 
 .PHONY: lint
 lint:
-	clang-format -i --style="{BasedOnStyle: google, IndentWidth: 4}" lib/* src/*
+	clang-format -i --style=file lib/* src/*

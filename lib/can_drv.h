@@ -59,7 +59,7 @@ uint8_t can_get_free_mob(void);
 /*
  * Retrieves data from CANPAGE
  */
-void can_get_data(uint8_t* msg, uint8_t dlc);
+void can_get_data(uint8_t *msg, uint8_t dlc);
 
 /*
  * Gets the status of the MOb
