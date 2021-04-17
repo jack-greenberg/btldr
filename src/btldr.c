@@ -6,14 +6,13 @@
 #include <avr/io.h>
 #include <inttypes.h>
 
+#include "config.h"
 #include "can_isp.h"
 #include "can_lib.h"
 
 /*
  * MCUSR := MCU Status Register
  */
-
-// void (*start_app)(void) = 0x0000;
 
 int main(void) {
     // First, disable interrupts
@@ -37,8 +36,9 @@ int main(void) {
     }
 
     can_init();
-    while (can_isp_task())
+    while (can_isp_task() == CAN_ISP_ST_OK)
         ;
 
-    // TODO: Verification? But if JUMP is a CAN command?
+    // TODO: We shouldn't reach here, so we should indicate that by blinking an
+    // LED
 }
