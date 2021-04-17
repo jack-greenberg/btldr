@@ -8,8 +8,8 @@
 extern int __data_start;
 extern int __data_end;
 
-const image_hdr_t *image_get_header(void) {
-    const image_hdr_t *hdr = (image_hdr_t *)&__data_start;
+image_hdr_t *image_get_header(void) {
+    image_hdr_t *hdr = (image_hdr_t *)&__data_start;
 
     if (hdr && (hdr->image_magic == IMAGE_MAGIC)) {
         return hdr;
@@ -18,8 +18,12 @@ const image_hdr_t *image_get_header(void) {
     }
 }
 
-bool image_validate(const image_hdr_t *hdr) {
-    const void *image_addr = &__data_start;
+bool image_validate(image_hdr_t *hdr) {
+    if (hdr == NULL) {
+        return false;
+    }
+
+    void *image_addr = &__data_start;
     image_addr += sizeof(image_hdr_t);
     uint32_t length = hdr->image_size;
 

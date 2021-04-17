@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 #define IMAGE_MAGIC (0x0E13)  // OEM
@@ -16,6 +17,6 @@ typedef struct {
     char git_sha[8];
 } image_hdr_t;
 
-const image_hdr_t *image_get_header(void);
+image_hdr_t *image_get_header(void);
 
-int image_validate(const image_hdr_t *hdr);
+bool image_validate(image_hdr_t *hdr);
