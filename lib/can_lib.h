@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define CAN_POLL_TIMEOUT (100)
+#define CAN_AUTO_MOB (0xFF)
 
 typedef enum {
     CAN_ST_OK = 0x00,

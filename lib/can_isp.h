@@ -5,9 +5,27 @@
  * CAN ISP Commands
  */
 #define CAN_ID_NODE_SELECT (0x03u)
+#define NODE_SELECT_OPEN (0x00)
+#define NODE_SELECT_QUERY (0x80)
+
 #define CAN_ID_SESSION_START (0x04u)
+#define SESSION_UPLOAD (0x00)
+#define SESSION_DOWNLOAD (0x80)
+
 #define CAN_ID_DATA (0x05u)
 #define CAN_ID_START_APP (0x07u)
+
+/*
+ * CAN ISP Responses
+ */
+#define RESP_DATA_OK (0x01)
+#define RESP_DATA_EOF (0x00)
+#define RESP_SELECT_CLOSED (0x00)
+#define RESP_SELECT_OPENED (0x01)
+#define RESP_SESSION_OK (0x00)
+// TODO Session start errors
+#define RESP_START_OK (0x00)
+#define RESP_START_IMAGE_INVALID (0x01)
 
 /*
  * Other defines
@@ -15,12 +33,10 @@
 #define CAN_ISP_MASK (0x3FF)
 #define CAN_MAX_MSG_LENGTH (8)
 
-// TODO: Node number management
-#define NODE_ID 0x1
-
 typedef enum {
-    CAN_ISP_ST_SUCCESS,
+    CAN_ISP_ST_OK,
     CAN_ISP_ST_ERROR,
+    CAN_ISP_ST_START_APP,
 } CAN_isp_status;
 
 CAN_isp_status can_isp_task(void);

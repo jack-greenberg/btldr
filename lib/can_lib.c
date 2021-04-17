@@ -25,7 +25,9 @@ CAN_status can_receive(Can_msg *msg) {
 }
 
 CAN_status can_transmit(Can_msg *msg) {
-    msg->mob = can_get_free_mob();
+    if (msg->mob == CAN_AUTO_MOB) {
+        msg->mob = can_get_free_mob();
+    }
 
     if (msg->mob == NO_MOB) {
         return CAN_ST_ERROR;

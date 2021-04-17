@@ -8,12 +8,12 @@
 
 void (*start_app)(void) = 0x0000;
 
-static uint32_t crc = 0x00;
+// static uint32_t crc = 0x00;
 
 bool is_programming = false;
 
 CAN_isp_status can_isp_task(void) {
-    CAN_isp_status st = CAN_ISP_ST_SUCCESS;
+    CAN_isp_status st = CAN_ISP_ST_OK;
     CAN_status can_st = CAN_ST_OK;
 
     uint8_t data[CAN_MAX_MSG_LENGTH];
