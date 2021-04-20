@@ -8,13 +8,10 @@
 
 void (*start_app)(void) = 0x0000;
 
-// static uint32_t crc = 0x00;
-
 bool is_programming = false;
 
 CAN_isp_status can_isp_task(void) {
     CAN_isp_status st = CAN_ISP_ST_OK;
-    CAN_status can_st = CAN_ST_OK;
 
     uint8_t data[CAN_MAX_MSG_LENGTH];
 
@@ -27,46 +24,35 @@ CAN_isp_status can_isp_task(void) {
         .length = CAN_MAX_MSG_LENGTH,
     };
 
-    can_st = can_receive(&msg);
-    if (can_st != CAN_ST_OK) {
-        // transmit error?
-    }
+    // Receive CAN message
+    can_receive(&msg);
+    // This shouldn't error because we always restore our MObs
 
-    size_t timeout_count = 0;
-    while (can_poll_complete(&msg) == CAN_ST_NOT_READY) {
-        timeout_count += 1;
-        if (timeout_count >= CAN_POLL_TIMEOUT) {
-            // error
-        }
-    }
-
-    // if (msg.id != CAN_ID_SESSION_START && !is_programming) {
-    //     // TODO What does the ECU do if it's not being updated?
-    //     start_app();
-    // }
+    // TODO: what to do if there's an error
+    // TODO: Do we need a timeout?
+    while (can_poll_complete(&msg) == CAN_ST_NOT_READY);
 
     switch (msg.id) {
         case CAN_ID_NODE_SELECT: {
             st = can_node_select(msg.data, msg.length);
             break;
         }
-
         case CAN_ID_SESSION_START: {
             can_session_start(msg.data, msg.length);
             break;
         }
-
         case CAN_ID_DATA: {
             can_data(msg.data, msg.length);
             break;
         }
-
-        case CAN_ID_START_APP:
+        case CAN_ID_START_APP: {
             can_start_app(msg.data, msg.length);
             break;
-
-        default:
+        }
+        default: {
+            // TODO: Transmit error
             break;
+        }
     }
 
     return st;

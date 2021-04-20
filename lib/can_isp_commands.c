@@ -37,29 +37,25 @@ CAN_isp_status can_node_select(uint8_t *data, uint8_t length) {
         resp_data[0] = 0x01;
     }
 
-    resp.data = (uint8_t *) resp_data;
+    resp.data = resp_data;
     resp.length = 2;
 
     can_transmit(&resp);
-
-    // TODO should the device jump back to the app?
 
     return CAN_ISP_ST_OK;
 }
 
 CAN_isp_status can_session_start(uint8_t *data, uint8_t length) {
-    uint16_t start_addr = (data[1] << 8) | data[2];
-    uint16_t end_addr = (data[3] << 8) | data[4];
-    program_memory_address = start_addr;
-    program_memory_num_bytes = (end_addr - start_addr) + 1;
-
+    program_memory_address = 0x00;
+    program_memory_num_bytes = (data[1] << 8) | data[2];
     uint8_t resp_data[1] = { RESP_SESSION_OK };
+
     Can_msg resp = {
         .mob = CAN_AUTO_MOB,
         .mask = 0x00,
         .id = CAN_ID_SESSION_START,
         .length = 1,
-        .data = (uint8_t *) resp_data,
+        .data = resp_data,
     };
 
     can_transmit(&resp);
@@ -95,39 +91,33 @@ CAN_isp_status can_data(uint8_t *data, uint8_t length) {
         resp_data[0] = RESP_DATA_EOF;
     }
 
-    resp.data = (uint8_t*) resp_data;
+    resp.data = resp_data;
     can_transmit(&resp);
 
     return CAN_ISP_ST_OK;
 }
 
 CAN_isp_status can_start_app(uint8_t* msg, uint8_t length) {
+    CAN_isp_status st;
     image_hdr_t *img_hdr = image_get_header();
 
     Can_msg resp = {
         .id = CAN_ID_START_APP,
-        .mask = 0x00,
+        .mask = CAN_NO_FILTERING,
         .mob = CAN_AUTO_MOB,
         .length = 1,
     };
 
-    bool valid;
     uint8_t resp_data[1];
     if (!image_validate(img_hdr)) {
-        valid = false;
         resp_data[0] = RESP_START_IMAGE_INVALID;
+        st = CAN_ISP_ST_ERROR;
     } else {
-        valid = true;
         resp_data[0] = RESP_START_OK;
+        st = CAN_ISP_ST_OK
     }
 
     resp.data = resp_data;
-
     can_transmit(&resp);
-    
-    if (valid) {
-        return CAN_ISP_ST_START_APP;
-    } else {
-        return CAN_ISP_ST_ERROR;
-    }
+    return st;
 }

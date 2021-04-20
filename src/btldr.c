@@ -18,9 +18,6 @@ int main(void) {
     // First, disable interrupts
     cli();
 
-    uint8_t rst = MCUSR;
-    MCUSR = 0;
-
     /*
      * MCUSR will be unequal to 0 if any of the following have occured:
      *   - Watchdog system reset
@@ -30,15 +27,20 @@ int main(void) {
      *
      * In all of these cases, we'll just want to jump to the application
      */
+    uint8_t rst = MCUSR;
+    MCUSR = 0;
     if (rst != 0) {
         MCUSR = rst;
         start_app();
     }
 
+    /*
+     * TODO: Clear bootflag
+     */
+
     can_init();
     while (can_isp_task() == CAN_ISP_ST_OK)
         ;
 
-    // TODO: We shouldn't reach here, so we should indicate that by blinking an
-    // LED
+    while (1); // TODO: How should we indicate that we got here?
 }

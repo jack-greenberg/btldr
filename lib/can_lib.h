@@ -5,14 +5,13 @@
 #pragma once
 #include <stdint.h>
 
-#define CAN_POLL_TIMEOUT (100)
 #define CAN_AUTO_MOB (0xFF)
+#define CAN_NO_FILTERING (0x000)
 
 typedef enum {
     CAN_ST_OK = 0x00,
     CAN_ST_ERROR = 0x01,
-    CAN_ST_NOT_READY,
-    CAN_ST_TIMEOUT,
+    CAN_ST_NOT_READY = 0x02,
 } CAN_status;
 
 typedef struct {
@@ -53,6 +52,5 @@ CAN_status can_transmit(Can_msg *msg);
  *   CAN_ST_OK        - Message sent/received
  *   CAN_ST_ERROR     - Message error
  *   CAN_ST_NOT_READY - Message not sent/received
- *   CAN_ST_TIMEOUT   - Message timeout
  */
 CAN_status can_poll_complete(Can_msg *msg);

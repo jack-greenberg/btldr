@@ -13,6 +13,7 @@
 #define SESSION_DOWNLOAD (0x80)
 
 #define CAN_ID_DATA (0x05u)
+
 #define CAN_ID_START_APP (0x07u)
 
 /*
@@ -23,15 +24,14 @@
 #define RESP_SELECT_CLOSED (0x00)
 #define RESP_SELECT_OPENED (0x01)
 #define RESP_SESSION_OK (0x00)
-// TODO Session start errors
 #define RESP_START_OK (0x00)
 #define RESP_START_IMAGE_INVALID (0x01)
 
 /*
  * Other defines
  */
-#define CAN_ISP_MASK (0x3FF)
-#define CAN_MAX_MSG_LENGTH (8)
+#define CAN_ISP_MASK (0x000)  // No filtering
+#define CAN_MAX_MSG_LENGTH (8)  // Always accept up to 8 bytes
 
 typedef enum {
     CAN_ISP_ST_OK,
