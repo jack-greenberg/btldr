@@ -6,8 +6,6 @@
 
 void (*start_app)(void) = 0x0000;
 
-static uint32_t crc = 0x00;
-
 bool is_programming = false;
 
 CAN_isp_status can_isp_task(void) {

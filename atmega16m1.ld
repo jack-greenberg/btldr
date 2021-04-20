@@ -29,6 +29,7 @@ SECTIONS
   /* Read-only sections, merged into text segment: */
   .image_hdr :
   {
+    __image_hdr = .;
     KEEP(*(.image_hdr))
   } > text
   .hash          : { *(.hash)		}

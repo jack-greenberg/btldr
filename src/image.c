@@ -4,11 +4,10 @@
 
 #include "crc32.h"
 
-extern int __data_start;
-extern int __data_end;
+extern int __image_hdr;
 
 const image_hdr_t *image_get_header(void) {
-    const image_hdr_t *hdr = (image_hdr_t *)&__data_start;
+    const image_hdr_t *hdr = (image_hdr_t *)&__image_hdr;
 
     if (hdr && (hdr->image_magic == IMAGE_MAGIC)) {
         return hdr;

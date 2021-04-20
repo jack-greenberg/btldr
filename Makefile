@@ -80,7 +80,7 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 
 .PHONY: all
 
-all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).bin.size $(BUILD_DIR)/$(APP).bin.size patch_header
+all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).elf.size $(BUILD_DIR)/$(APP).elf.size patch_header
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $^ $@ -O ihex
@@ -109,6 +109,7 @@ patch_header: scripts/patch_header.c
 .PHONY: size
 %.size: %
 	stat $< --printf "%s bytes\n"
+	nm --size-sort --print-size $< | sort
 
 .PHONY: clean
 clean:
