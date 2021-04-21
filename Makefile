@@ -7,7 +7,12 @@ BOOTSTART = 0x3000
 
 # Structure
 TARGET = btldr
+APP = main
 BUILD_DIR = build
+
+SRCS_APP = \
+		   src/main.c \
+		   src/image.c
 
 SRCS_BOOT = \
 			src/btldr.c
@@ -23,7 +28,10 @@ SRCS_SHARED = \
 
 INCLUDES += lib
 
+SRCS_APP += lib/crc32.c
 SRCS_BOOT += $(SRCS_SHARED)
+
+LDSCRIPT=atmega16m1.ld
 
 # Toolchain
 PREFIX = avr-
@@ -50,7 +58,7 @@ LDFLAGS = \
 		  -static \
 		  -nostartfiles \
 		  -Wl,--build-id \
-		  -Wl,--section-start=.text=$(BOOTSTART)
+		  -T $(LDSCRIPT)
 
 AVRDUDE_FLAGS = \
 				-p $(MCU) \
@@ -59,7 +67,7 @@ AVRDUDE_FLAGS = \
 
 GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
 
-DEFINES += GIT_SHA=$(GIT_SHA)
+DEFINES += GIT_SHA=$(GIT_SHA) F_CPU='16000000'
 CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
@@ -73,14 +81,25 @@ LOCKBITS_UNLOCK = lock:w:0x3F:m
 
 .PHONY: all
 
-all: $(BUILD_DIR)/$(PROJECT).bin size
+all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).elf.size $(BUILD_DIR)/$(APP).elf.size patch_header
 
-$(BUILD_DIR)/$(PROJECT).bin: $(BUILD_DIR)/$(PROJECT).elf
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
+	$(OBJCOPY) $^ $@ -O ihex
+
+$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $^ $@ -O binary
 
 $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--section-start=.text=$(BOOTSTART) $^ -o $@
+
+$(BUILD_DIR)/$(APP).elf: $(SRCS_APP)
+	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+patch_header: scripts/patch_header.c
+	@mkdir -p $(BUILD_DIR)
+	gcc -DDEBUG -o $(BUILD_DIR)/$@ $^
 
 # fuses:
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U $(LFUSE) -U $(HFUSE) -U $(EFUSE)
@@ -88,9 +107,10 @@ $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 # app_flash: $(BUILD_DIR)/$(APP).hex
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$<:i
 
-.PHONY: size
-size: $(BUILD_DIR)/$(PROJECT).elf
-	$(SIZE) --format=avr --mcu=$(MCU) $<
+%.size: %
+	nm --size-sort --print-size -td $< | sort >> $@
+	echo "" >> $@
+	stat $< --printf "%s bytes\n" > $@ # TODO: We should stat the bin file
 
 .PHONY: clean
 clean:
@@ -98,4 +118,4 @@ clean:
 
 .PHONY: lint
 lint:
-	clang-format -i --style=file lib/* src/*
+	clang-format -i --style=file lib/* src/* scripts/*
