@@ -24,6 +24,7 @@ CAN_status can_receive(Can_msg *msg) {
     return CAN_ST_OK;
 }
 
+// TODO: Forgot to transmit the data
 CAN_status can_transmit(Can_msg *msg) {
     if (msg->mob == CAN_AUTO_MOB) {
         msg->mob = can_get_free_mob();
