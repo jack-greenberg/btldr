@@ -39,13 +39,13 @@ CAN_isp_status can_node_select(uint8_t *data, uint8_t length) {
                 resp_data[0] = RESP_SELECT_CLOSED;
             } else {
                 is_programming = true;
-                resp_data[0] = RESP_SELECT_OPEN;
+                resp_data[0] = RESP_SELECT_OPENED;
             }
             break;
         }
         case NODE_SELECT_QUERY: {
             resp_data[0] = is_programming ? \
-                           RESP_SELECT_OPEN : RESP_SELECT_CLOSED;
+                           RESP_SELECT_OPENED : RESP_SELECT_CLOSED;
             break;
         }
     }
@@ -77,7 +77,7 @@ CAN_isp_status can_session_start(uint8_t *data, uint8_t length) {
             break;
         }
         case SESSION_DOWNLOAD: {
-            image_hdr_t *hdr = image_get_header();
+            const image_hdr_t *hdr = image_get_header();
             uint16_t image_size = hdr->image_size;  // TODO: 32 bits or 16?
             uint8_t msg[8];
 
@@ -146,7 +146,7 @@ CAN_isp_status can_data(uint8_t *data, uint8_t length) {
 
 CAN_isp_status can_start_app(uint8_t* msg, uint8_t length) {
     CAN_isp_status st;
-    image_hdr_t *img_hdr = image_get_header();
+    const image_hdr_t *img_hdr = image_get_header();
 
     Can_msg resp = {
         .id = CAN_ID_START_APP,
@@ -161,7 +161,7 @@ CAN_isp_status can_start_app(uint8_t* msg, uint8_t length) {
         st = CAN_ISP_ST_ERROR;
     } else {
         resp_data[0] = RESP_START_OK;
-        st = CAN_ISP_ST_OK
+        st = CAN_ISP_ST_OK;
     }
 
     resp.data = resp_data;

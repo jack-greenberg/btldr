@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "../src/image.h"
+#include "../lib/image.h"
 
 uint32_t crc32_for_byte(uint32_t r) {
     for (int j = 0; j < 8; ++j)

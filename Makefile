@@ -11,8 +11,7 @@ APP = main
 BUILD_DIR = build
 
 SRCS_APP = \
-		   src/main.c \
-		   src/image.c
+		   src/main.c
 
 SRCS_BOOT = \
 			src/btldr.c

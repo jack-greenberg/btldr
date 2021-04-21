@@ -20,4 +20,4 @@ typedef struct __attribute__((packed)) {
 
 const image_hdr_t* image_get_header(void);
 
-bool image_validate(image_hdr_t *hdr);
+int image_validate(const image_hdr_t *hdr);
