@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     printf("Found data: {\n");
     printf("    .image_magic = %x\n", image_hdr.image_magic);
     printf("    .crc = %x\n", image_hdr.crc);
-    printf("    .image_size = %x\n", image_hdr.image_size);
+    printf("    .image_size = %d\n", image_hdr.image_size);
     printf("    .flash_timestamp = %ld\n", image_hdr.flash_timestamp);
     printf("    .reserved = %x\n", image_hdr.reserved);
     printf("    .git_sha = %s\n", image_hdr.git_sha);

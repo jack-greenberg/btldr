@@ -1,13 +1,14 @@
 #include "image.h"
 
 #include <stdint.h>
+#include <avr/pgmspace.h>
 
 #include "crc32.h"
 
 extern int __image_hdr;
 
 const image_hdr_t *image_get_header(void) {
-    const image_hdr_t *hdr = (image_hdr_t *)&__image_hdr;
+    const image_hdr_t *hdr = (image_hdr_t *)__image_hdr;
 
     if (hdr && (hdr->image_magic == IMAGE_MAGIC)) {
         return hdr;
@@ -17,11 +18,23 @@ const image_hdr_t *image_get_header(void) {
 }
 
 int image_validate(const image_hdr_t *hdr) {
-    // const void *image_addr = &__data_start;
-    // image_addr += sizeof(image_hdr_t);
-    // uint32_t length = hdr->image_size;
-    // uint32_t crc;
-    // crc32(image_addr, (size_t)length, &crc);
+    uint16_t image_addr = sizeof(image_hdr_t);
+    uint16_t image_size = hdr->image_size;
 
-    return 1;
+    if (hdr->image_magic != IMAGE_MAGIC) {
+        return IMAGE_INVALID_MAGIC;
+    }
+
+    uint32_t crc;
+    uint8_t data = 0x00;
+    for (; image_size != 0; image_size--, image_addr++) {
+        data = pgm_read_byte(image_addr);
+        crc32_step(data, &crc);
+    }
+
+    if (crc != hdr->crc) {
+        return IMAGE_INVALID_CRC;
+    }
+
+    return IMAGE_VALID;
 }

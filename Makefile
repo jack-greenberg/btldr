@@ -28,6 +28,7 @@ SRCS_SHARED = \
 
 INCLUDES += lib
 
+SRCS_APP += lib/crc32.c
 SRCS_BOOT += $(SRCS_SHARED)
 
 LDSCRIPT=atmega16m1.ld
@@ -106,10 +107,10 @@ patch_header: scripts/patch_header.c
 # app_flash: $(BUILD_DIR)/$(APP).hex
 # 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$<:i
 
-.PHONY: size
 %.size: %
-	stat $< --printf "%s bytes\n"
-	nm --size-sort --print-size $< | sort
+	nm --size-sort --print-size -td $< | sort >> $@
+	echo "" >> $@
+	stat $< --printf "%s bytes\n" > $@ # TODO: We should stat the bin file
 
 .PHONY: clean
 clean:
