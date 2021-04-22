@@ -14,14 +14,14 @@ SRCS_APP = \
 		   src/main.c
 
 SRCS_BOOT = \
-			src/btldr.c
+			src/btldr.c \
+			src/can_isp.c \
+			src/can_isp_commands.c
 
 SRCS_SHARED = \
 			  lib/image.c \
 			  lib/can_drv.c \
 			  lib/can_lib.c \
-			  lib/can_isp.c \
-			  lib/can_isp_commands.c \
 			  lib/flash.c \
 			  lib/crc32.c
 

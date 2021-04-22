@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../src/config.h" // TODO: Shouldn't have to reference like this
+#include "config.h" // TODO: Shouldn't have to reference like this
 #include "can_isp.h"
 #include "can_lib.h"
 #include "flash.h"

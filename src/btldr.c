@@ -4,7 +4,7 @@
  */
 #include <avr/interrupt.h>
 #include <avr/io.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "config.h"
 #include "can_isp.h"
