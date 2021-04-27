@@ -8,7 +8,7 @@
 
 #include "config.h"
 #include "can_isp.h"
-#include "can_lib.h"
+#include "lib/can_lib.h"
 
 /*
  * MCUSR := MCU Status Register

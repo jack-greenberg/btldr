@@ -1,5 +1,5 @@
 #pragma once
-#include <inttypes.h>
+#include <stdint.h>
 
 // Page size in bytes
 #define PAGESIZE_B (SPM_PAGESIZE)

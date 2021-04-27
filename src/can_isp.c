@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "can_lib.h"
+#include "lib/can_lib.h"
 
 void (*start_app)(void) = 0x0000;
 

@@ -4,9 +4,9 @@
 
 #include "config.h" // TODO: Shouldn't have to reference like this
 #include "can_isp.h"
-#include "can_lib.h"
-#include "flash.h"
-#include "image.h"
+#include "lib/can_lib.h"
+#include "lib/flash.h"
+#include "lib/image.h"
 
 extern bool is_programming;
 

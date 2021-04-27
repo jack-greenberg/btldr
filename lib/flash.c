@@ -3,7 +3,7 @@
 #include <avr/boot.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 void flash_write(uint8_t *data, uint16_t address) {
     uint8_t sreg = SREG;

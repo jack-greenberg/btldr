@@ -1,4 +1,4 @@
-#include "image.h"
+#include "lib/image.h"
 
 #include <stdint.h>
 #include <avr/pgmspace.h>
