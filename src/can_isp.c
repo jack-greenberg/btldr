@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 #include "can_lib.h"
+#include "image.h"
 
-void (*start_app)(void) = 0x0000;
+void (*start_app)(void) = (void*)(0 + sizeof(image_hdr_t));
 
 bool is_programming = false;
 
