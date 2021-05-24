@@ -73,17 +73,19 @@ CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 # Fuses
 # Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D9&EXTENDED=FF&LOCKBIT=3F
 LFUSE = lfuse:w:0x65:m
-HFUSE = hfuse:w:0xD9:m
+HFUSE = hfuse:w:0xD8:m
 EFUSE = efuse:w:0xFF:m
-LOCKBITS_LOCK = lock:w:0x0F:m
-LOCKBITS_UNLOCK = lock:w:0x3F:m
+LOCKBITS_LOCK = lock:w:0xCF:m
+LOCKBITS_UNLOCK = lock:w:0xFF:m
 
 .PHONY: all
+all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).hex
 
 all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).elf.size $(BUILD_DIR)/$(APP).elf.size patch_header
 
-$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
-	$(OBJCOPY) $^ $@ -O ihex
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf patch_header
+	$(OBJCOPY) $< $@ -O ihex
+	# TODO: Patch header
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $^ $@ -O binary
