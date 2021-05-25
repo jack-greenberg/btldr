@@ -1,7 +1,7 @@
 # Author: Jack Greenberg <j@jackgreenberg.co>
 PROJECT = btldr-example
 MCU = atmega16m1
-F_CPU = 16000000UL
+F_CPU = 4000000UL
 PROGRAMMER = usbasp
 BOOTSTART = 0x3000
 
@@ -44,7 +44,6 @@ AVRDUDE = avrdude
 # Flags
 CFLAGS = \
 		 -mmcu=$(MCU) \
-		 -g \
 		 -Os \
 		 -Wall \
 	   	 -Wunused \
@@ -56,22 +55,25 @@ LDFLAGS = \
 		  -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map \
 		  -static \
 		  -nostartfiles \
+		  -ffunction-sections \
 		  -Wl,--build-id \
 		  -T $(LDSCRIPT)
 
 AVRDUDE_FLAGS = \
-				-p $(MCU) \
+				-p m16 \
 				-c $(PROGRAMMER) \
-				-P usb -v
+				-P usb \
+				-v \
+				-F
 
 GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
 
-DEFINES += GIT_SHA=$(GIT_SHA) F_CPU='16000000'
+DEFINES += GIT_SHA=$(GIT_SHA) F_CPU=$(F_CPU)
 CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
 # Fuses
-# Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D9&EXTENDED=FF&LOCKBIT=3F
+# Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D8&EXTENDED=FF&LOCKBIT=3F
 LFUSE = lfuse:w:0x65:m
 HFUSE = hfuse:w:0xD8:m
 EFUSE = efuse:w:0xFF:m
@@ -80,8 +82,6 @@ LOCKBITS_UNLOCK = lock:w:0xFF:m
 
 .PHONY: all
 all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).hex
-
-all: $(BUILD_DIR)/$(PROJECT).bin $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).elf.size $(BUILD_DIR)/$(APP).elf.size patch_header
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf patch_header
 	$(OBJCOPY) $< $@ -O ihex
@@ -102,11 +102,15 @@ patch_header: scripts/patch_header.c
 	@mkdir -p $(BUILD_DIR)
 	gcc -DDEBUG -o $(BUILD_DIR)/$@ $^
 
-# fuses:
-# 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U $(LFUSE) -U $(HFUSE) -U $(EFUSE)
+flash: $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(PROJECT).hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) \
+		-U $(LFUSE) \
+		-U $(HFUSE) \
+		-U $(LOCKBITS_UNLOCK) \
+		-U flash:w:$(BUILD_DIR)/$(PROJECT).hex:i \
+		-U $(LOCKBITS_LOCK) \
+		-U flash:w:$(BUILD_DIR)/$(APP).hex:i
 
-# app_flash: $(BUILD_DIR)/$(APP).hex
-# 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$<:i
 
 %.size: %
 	nm --size-sort --print-size -td $< | sort >> $@

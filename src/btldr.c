@@ -18,6 +18,10 @@ int main(void) {
     // First, disable interrupts
     cli();
 
+    // Indicate that we are in bootloader
+    DDRB |= _BV(PB0);
+    PORTB |= _BV(PB0);
+
     /*
      * MCUSR will be unequal to 0 if any of the following have occured:
      *   - Watchdog system reset
@@ -37,10 +41,8 @@ int main(void) {
     /*
      * TODO: Clear bootflag
      */
-
     can_init();
-    while (can_isp_task() == CAN_ISP_ST_OK)
-        ;
+    while (can_isp_task() == CAN_ISP_ST_OK);
 
     while (1); // TODO: How should we indicate that we got here?
 }

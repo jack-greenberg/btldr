@@ -15,10 +15,8 @@ image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
     .git_sha = GIT_SHA,
 };
 
-static void SystemInit(void) { sei(); }
-
 int main(void) {
-    SystemInit();
+    sei();
     DDRB |= _BV(PB0);
 
     for (;;) {
