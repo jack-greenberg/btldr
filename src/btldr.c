@@ -19,8 +19,8 @@ int main(void) {
     cli();
 
     // Indicate that we are in bootloader
-    DDRB |= _BV(PB0);
-    PORTB |= _BV(PB0);
+    DDRD |= _BV(PD7);
+    PORTD |= _BV(PD7);
 
     /*
      * MCUSR will be unequal to 0 if any of the following have occured:

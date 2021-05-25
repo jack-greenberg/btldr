@@ -55,6 +55,7 @@ LDFLAGS = \
 		  -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map \
 		  -static \
 		  -nostartfiles \
+		  -nostdlib \
 		  -ffunction-sections \
 		  -Wl,--build-id \
 		  -T $(LDSCRIPT)

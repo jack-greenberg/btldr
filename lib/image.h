@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #define IMAGE_MAGIC (0x4F454D21)  // "OEM!"
-// #define IMAGE_MAGIC (0x214D454F)  // "OEM!", reversed for little endian
 
 #define IMAGE_VALID (0x0)
 #define IMAGE_INVALID_CRC (0x1)
