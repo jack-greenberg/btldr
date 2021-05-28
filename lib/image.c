@@ -1,20 +1,17 @@
 #include "image.h"
 
-#include <stdint.h>
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 #include "crc32.h"
 
 extern int __image_hdr;
 
-const image_hdr_t *image_get_header(void) {
-    const image_hdr_t *hdr = (image_hdr_t *)__image_hdr;
+static image_hdr_t hdr;
 
-    if (hdr && (hdr->image_magic == IMAGE_MAGIC)) {
-        return hdr;
-    } else {
-        return NULL;
-    }
+const image_hdr_t *image_get_header(void) {
+    memcpy_P(&hdr, (void *)__image_hdr, sizeof(image_hdr_t));
+    return &hdr;
 }
 
 int image_validate(const image_hdr_t *hdr) {
@@ -27,7 +24,7 @@ int image_validate(const image_hdr_t *hdr) {
 
     uint32_t crc;
     uint8_t data = 0x00;
-    for (; image_size != 0; image_size--, image_addr++) {
+    for (; image_size > 0; image_size--, image_addr++) {
         data = pgm_read_byte(image_addr);
         crc32_step(data, &crc);
     }

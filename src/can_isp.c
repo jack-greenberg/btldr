@@ -5,9 +5,20 @@
 #include <stdint.h>
 
 #include "can_lib.h"
+#include "debug.h"
 #include "image.h"
 
-void (*start_app)(void) = (void*)(0 + sizeof(image_hdr_t));
+int start_app(void) {
+    const image_hdr_t* hdr = image_get_header();
+    int valid = image_validate(hdr);
+
+    if (valid == IMAGE_VALID) {
+        asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
+    } else {
+        return valid;
+    }
+    return 0;
+}
 
 bool is_programming = false;
 
@@ -31,7 +42,8 @@ CAN_isp_status can_isp_task(void) {
 
     // TODO: what to do if there's an error
     // TODO: Do we need a timeout?
-    while (can_poll_complete(&msg) == CAN_ST_NOT_READY);
+    while (can_poll_complete(&msg) == CAN_ST_NOT_READY)
+        ;
 
     switch (msg.id) {
         case CAN_ID_NODE_SELECT: {

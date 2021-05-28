@@ -1,7 +1,7 @@
 # Author: Jack Greenberg <j@jackgreenberg.co>
 PROJECT = btldr-example
 MCU = atmega16m1
-F_CPU = 4000000UL
+F_CPU = 4000000
 PROGRAMMER = usbasp
 BOOTSTART = 0x3000
 
@@ -23,11 +23,12 @@ SRCS_SHARED = \
 			  lib/can_drv.c \
 			  lib/can_lib.c \
 			  lib/flash.c \
+			  lib/debug.c \
 			  lib/crc32.c
 
 INCLUDES += lib
 
-SRCS_APP += lib/crc32.c
+SRCS_APP += lib/crc32.c lib/debug.c
 SRCS_BOOT += $(SRCS_SHARED)
 
 LDSCRIPT=atmega16m1.ld
@@ -45,9 +46,11 @@ AVRDUDE = avrdude
 CFLAGS = \
 		 -mmcu=$(MCU) \
 		 -Os \
+		 -g \
 		 -Wall \
 	   	 -Wunused \
 		 -fno-jump-tables \
+		 -ffunction-sections \
 		 -Werror
 
 LDFLAGS = \
@@ -55,9 +58,6 @@ LDFLAGS = \
 		  -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map \
 		  -static \
 		  -nostartfiles \
-		  -nostdlib \
-		  -ffunction-sections \
-		  -Wl,--build-id \
 		  -T $(LDSCRIPT)
 
 AVRDUDE_FLAGS = \
@@ -82,14 +82,16 @@ LOCKBITS_LOCK = lock:w:0xCF:m
 LOCKBITS_UNLOCK = lock:w:0xFF:m
 
 .PHONY: all
-all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).hex
+all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).bin
 
-$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf patch_header
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf #patch_header
 	$(OBJCOPY) $< $@ -O ihex
 	# TODO: Patch header
 
-$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
-	$(OBJCOPY) $^ $@ -O binary
+$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf patch_header
+	$(OBJCOPY) $< $@ -O binary
+	$(BUILD_DIR)/patch_header $@
+
 
 $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 	@mkdir -p $(BUILD_DIR)
@@ -103,14 +105,14 @@ patch_header: scripts/patch_header.c
 	@mkdir -p $(BUILD_DIR)
 	gcc -DDEBUG -o $(BUILD_DIR)/$@ $^
 
-flash: $(BUILD_DIR)/$(APP).hex $(BUILD_DIR)/$(PROJECT).hex
+flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) \
 		-U $(LFUSE) \
 		-U $(HFUSE) \
 		-U $(LOCKBITS_UNLOCK) \
 		-U flash:w:$(BUILD_DIR)/$(PROJECT).hex:i \
 		-U $(LOCKBITS_LOCK) \
-		-U flash:w:$(BUILD_DIR)/$(APP).hex:i
+		-U flash:w:$(BUILD_DIR)/$(APP).bin:r
 
 
 %.size: %

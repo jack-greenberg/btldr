@@ -10,7 +10,7 @@
 
 typedef struct __attribute__((packed)) {
     uint32_t image_magic;
-    uint32_t crc; // TODO: 16 or 32 bit CRC?
+    uint32_t crc;  // TODO: 16 or 32 bit CRC?
     uint16_t image_size;
     uint64_t flash_timestamp;
     uint32_t reserved;
@@ -19,4 +19,4 @@ typedef struct __attribute__((packed)) {
 
 const image_hdr_t* image_get_header(void);
 
-int image_validate(const image_hdr_t *hdr);
+int image_validate(const image_hdr_t* hdr);

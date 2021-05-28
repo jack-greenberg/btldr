@@ -7,8 +7,10 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/delay.h>
-#include "image.h"
+
 #include "config.h"
+#include "debug.h"
+#include "image.h"
 
 image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
     .image_magic = IMAGE_MAGIC,
@@ -17,10 +19,13 @@ image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
 
 int main(void) {
     sei();
-    DDRB |= _BV(PB0);
+    DDRB |= _BV(PB1);
+
+    log_init();
+    log_uart("App initialized", 16);
 
     for (;;) {
-        PORTB ^= _BV(PB0);
-        _delay_ms(1000);
+        PORTB ^= _BV(PB1);
+        _delay_ms(250);
     }
 }

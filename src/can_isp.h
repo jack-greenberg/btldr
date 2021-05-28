@@ -30,7 +30,7 @@
 /*
  * Other defines
  */
-#define CAN_ISP_MASK (0x000)  // No filtering
+#define CAN_ISP_MASK (0x000)    // No filtering
 #define CAN_MAX_MSG_LENGTH (8)  // Always accept up to 8 bytes
 
 typedef enum {
@@ -41,7 +41,11 @@ typedef enum {
 
 CAN_isp_status can_isp_task(void);
 
-void (*start_app)(void);
+/*
+ * Validates application and, if valid, jumps to application. If image is
+ * invalid, goes into a while(True) loop
+ */
+int start_app(void);
 
 // Private functions defined in can_isp_commands.c
 CAN_isp_status can_node_select(uint8_t *data, uint8_t length);

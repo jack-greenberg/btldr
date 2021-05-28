@@ -2,9 +2,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "config.h" // TODO: Shouldn't have to reference like this
 #include "can_isp.h"
 #include "can_lib.h"
+#include "config.h"  // TODO: Shouldn't have to reference like this
 #include "flash.h"
 #include "image.h"
 
@@ -27,10 +27,10 @@ CAN_isp_status can_node_select(uint8_t *data, uint8_t length) {
         .id = CAN_ID_SESSION_START,
     };
 
-    uint8_t version = ((BOOTLOADER_VERSION_MAJ & 0xF) << 4) \
-                      | (BOOTLOADER_VERSION_MIN & 0xF);
+    uint8_t version =
+        ((BOOTLOADER_VERSION_MAJ & 0xF) << 4) | (BOOTLOADER_VERSION_MIN & 0xF);
 
-    uint8_t resp_data[2] = { 0x00, version };
+    uint8_t resp_data[2] = {0x00, version};
 
     switch (data[0]) {
         case NODE_SELECT_OPEN: {
@@ -44,8 +44,8 @@ CAN_isp_status can_node_select(uint8_t *data, uint8_t length) {
             break;
         }
         case NODE_SELECT_QUERY: {
-            resp_data[0] = is_programming ? \
-                           RESP_SELECT_OPENED : RESP_SELECT_CLOSED;
+            resp_data[0] =
+                is_programming ? RESP_SELECT_OPENED : RESP_SELECT_CLOSED;
             break;
         }
     }
@@ -64,7 +64,7 @@ CAN_isp_status can_session_start(uint8_t *data, uint8_t length) {
 
     switch (data[0]) {
         case SESSION_UPLOAD: {
-            uint8_t msg[1] = { 0x00 };
+            uint8_t msg[1] = {0x00};
             Can_msg resp = {
                 .mob = CAN_AUTO_MOB,
                 .mask = 0x00,
@@ -81,7 +81,7 @@ CAN_isp_status can_session_start(uint8_t *data, uint8_t length) {
             uint16_t image_size = hdr->image_size;  // TODO: 32 bits or 16?
             uint8_t msg[8];
 
-            for (uint16_t i = image_size; i >= 0; i-= 8) {
+            for (uint16_t i = image_size; i >= 0; i -= 8) {
                 uint16_t addr = image_size - i;
                 uint16_t size = i % 8 == 0 ? 8 : i % 8;
 
@@ -144,7 +144,7 @@ CAN_isp_status can_data(uint8_t *data, uint8_t length) {
     return CAN_ISP_ST_OK;
 }
 
-CAN_isp_status can_start_app(uint8_t* msg, uint8_t length) {
+CAN_isp_status can_start_app(uint8_t *msg, uint8_t length) {
     CAN_isp_status st;
     const image_hdr_t *img_hdr = image_get_header();
 
@@ -156,7 +156,7 @@ CAN_isp_status can_start_app(uint8_t* msg, uint8_t length) {
     };
 
     uint8_t resp_data[1];
-    if (!image_validate(img_hdr)) { // TODO: Remove `!`
+    if (!image_validate(img_hdr)) {  // TODO: Remove `!`
         resp_data[0] = RESP_START_IMAGE_INVALID;
         st = CAN_ISP_ST_ERROR;
     } else {
