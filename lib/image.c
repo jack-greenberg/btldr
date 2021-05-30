@@ -22,12 +22,13 @@ int image_validate(const image_hdr_t *hdr) {
         return IMAGE_INVALID_MAGIC;
     }
 
-    uint32_t crc;
+    uint32_t crc = ~0x0;
     uint8_t data = 0x00;
     for (; image_size > 0; image_size--, image_addr++) {
         data = pgm_read_byte(image_addr);
         crc32_step(data, &crc);
     }
+    crc = ~crc;
 
     if (crc != hdr->crc) {
         return IMAGE_INVALID_CRC;
