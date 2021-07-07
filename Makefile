@@ -61,11 +61,10 @@ LDFLAGS = \
 		  -T $(LDSCRIPT)
 
 AVRDUDE_FLAGS = \
-				-p m16 \
+				-p 16m1 \
 				-c $(PROGRAMMER) \
 				-P usb \
-				-v \
-				-F
+				-v
 
 GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
 
@@ -77,7 +76,7 @@ CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 # Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D8&EXTENDED=FF&LOCKBIT=3F
 LFUSE = lfuse:w:0x65:m
 HFUSE = hfuse:w:0xD8:m
-EFUSE = efuse:w:0xFF:m
+EFUSE = efuse:w:0xFE:m
 LOCKBITS_LOCK = lock:w:0xCF:m
 LOCKBITS_UNLOCK = lock:w:0xFF:m
 
@@ -109,6 +108,7 @@ flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) \
 		-U $(LFUSE) \
 		-U $(HFUSE) \
+		-U $(EFUSE) \
 		-U $(LOCKBITS_UNLOCK) \
 		-U flash:w:$(BUILD_DIR)/$(PROJECT).hex:i \
 		-U $(LOCKBITS_LOCK) \

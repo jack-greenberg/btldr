@@ -1,5 +1,6 @@
 ---
 BasedOnStyle: Google
 IndentWidth: 4
+AllowShortLoopsOnASingleLine: true
 ...
 
