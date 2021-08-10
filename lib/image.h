@@ -8,6 +8,11 @@
 #define IMAGE_INVALID_CRC (0x1)
 #define IMAGE_INVALID_MAGIC (0x2)
 
+#define CHIP_NONE (0x000U)
+#define CHIP_AVR_ATMEGA16M1 (0x001U)
+#define CHIP_AVR_ATMEGA328P (0x002U)
+#define CHIP_ARM_STM32F103C8T6 (0x003U)
+
 typedef struct __attribute__((packed)) {
     uint32_t image_magic;
     uint32_t crc;  // TODO: 16 or 32 bit CRC?
@@ -19,4 +24,4 @@ typedef struct __attribute__((packed)) {
 
 const image_hdr_t* image_get_header(void);
 
-int image_validate(const image_hdr_t* hdr);
+uint8_t image_validate(const image_hdr_t* hdr);

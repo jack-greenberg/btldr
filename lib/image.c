@@ -7,14 +7,14 @@
 
 extern int __image_hdr;
 
-static image_hdr_t hdr;
+static image_hdr_t prv_hdr;
 
 const image_hdr_t *image_get_header(void) {
-    memcpy_P(&hdr, (void *)__image_hdr, sizeof(image_hdr_t));
-    return &hdr;
+    memcpy_P(&prv_hdr, (void *)__image_hdr, sizeof(image_hdr_t));
+    return &prv_hdr;
 }
 
-int image_validate(const image_hdr_t *hdr) {
+uint8_t image_validate(const image_hdr_t *hdr) {
     uint16_t image_addr = sizeof(image_hdr_t);
     uint16_t image_size = hdr->image_size;
 

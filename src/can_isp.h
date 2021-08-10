@@ -1,31 +1,36 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 /*
  * CAN ISP Commands
+ *
+ * TODO: Support multiple CAN messages, one for each ECU, one for tester?
  */
-#define CAN_ID_NODE_SELECT (0x03u)
-#define NODE_SELECT_OPEN (0x00)
-#define NODE_SELECT_QUERY (0x80)
+#define CAN_ID_QUERY (0x000U)
+#define CAN_ID_RESET (0x002U)
+#define CAN_ID_REQUEST (0x004U)  // Upload or download
+#define CAN_ID_DATA (0x006U)
 
-#define CAN_ID_SESSION_START (0x04u)
-#define SESSION_UPLOAD (0x00)
-#define SESSION_DOWNLOAD (0x80)
-
-#define CAN_ID_DATA (0x05u)
-
-#define CAN_ID_START_APP (0x07u)
+#define REQUEST_DOWNLOAD (0x000U)
+#define REQUEST_UPLOAD (0x001U)
 
 /*
- * CAN ISP Responses
+ * Responses
  */
-#define RESP_DATA_OK (0x01)
-#define RESP_DATA_EOF (0x00)
-#define RESP_SELECT_CLOSED (0x00)
-#define RESP_SELECT_OPENED (0x01)
-#define RESP_SESSION_OK (0x00)
-#define RESP_START_OK (0x00)
-#define RESP_START_IMAGE_INVALID (0x01)
+#define CAN_ID_QUERY_RESPONSE (0x001U)
+#define CAN_ID_ERROR (0x003U)
+#define CAN_ID_SESSION (0x005U)
+#define CAN_ID_STATUS (0x007U)  // Sends status messages during update
+
+/*
+ * Error codes
+ */
+#define ERR_INVALID_COMMAND (0x000U)
+#define ERR_NO_SESSION (0x001U)
+#define ERR_TIMEOUT (0x002U)
+#define ERR_SESSION_EXISTS (0x003U)
+#define ERR_IMAGE_INVALID (0x004U)
 
 /*
  * Other defines
@@ -33,22 +38,77 @@
 #define CAN_ISP_MASK (0x000)    // No filtering
 #define CAN_MAX_MSG_LENGTH (8)  // Always accept up to 8 bytes
 
-typedef enum {
-    CAN_ISP_ST_OK,
-    CAN_ISP_ST_ERROR,
-    CAN_ISP_ST_START_APP,
-} CAN_isp_status;
-
-CAN_isp_status can_isp_task(void);
-
-/*
- * Validates application and, if valid, jumps to application. If image is
- * invalid, goes into a while(True) loop
+/**
+ * Jumps to application
+ *
+ * This function does NOT do image validation, and should be paired with a
+ * function that checks the validity of the image.
+ *
+ * @returns
+ *   Does not return if image is valid
  */
-int start_app(void);
+#define jump_to_app() asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
 
-// Private functions defined in can_isp_commands.c
-CAN_isp_status can_node_select(uint8_t *data, uint8_t length);
-CAN_isp_status can_session_start(uint8_t *data, uint8_t length);
-CAN_isp_status can_data(uint8_t *data, uint8_t length);
-CAN_isp_status can_start_app(uint8_t *msg, uint8_t length);
+union Address {
+    uint16_t word;
+    uint8_t bytes[2];
+};
+
+struct SessionData {
+    bool is_active;  // Is in a session (upld or dwld)
+    uint8_t type;    // 0 for download, 1 for upload
+    union {
+        // Current unprogrammed address
+        uint16_t word;
+        uint8_t bytes[2];
+    } current_addr;
+    union {
+        uint16_t word;
+        uint8_t bytes[2];
+        // Remaining size to download or upload
+    } remaining_size;
+};
+
+/**
+ * Main CAN message task
+ *
+ * Sets up CAN listening, handles responses and processes them using one of the
+ * functions below. Also sends responses to the host.
+ *
+ * @see
+ * @returns
+ *   0 - success
+ *   1 - Unrecoverable error
+ */
+uint8_t can_isp_task(void);
+
+/*************************************************
+ * Handler functions defined in can_isp_commands.c
+ **************************************************/
+
+/**
+ * Handles query request. Checks to see if node id matches, and if so, returns a
+ * message with the bootloader version and flash timestamp
+ *
+ * TODO:
+ *   Flash timestamp is 8 bytes, so need 2 CAN messages?
+ */
+uint8_t handle_query(uint8_t* data, uint8_t length);
+
+/**
+ * Handles request to reset the ECU. Should NOT return unless there is an error
+ */
+uint8_t handle_reset(uint8_t* data, uint8_t length);
+
+/**
+ * Handles request to upload or download software. Upload means the device
+ * should send it's flash contents to the host. Download means the device should
+ * receive data from the host and update it's flash.
+ */
+uint8_t handle_request(uint8_t* data, uint8_t length);
+
+/**
+ * Handles program data coming in from the host. Responsible for sending STATUS
+ * messages to relay the progress and status of the update
+ */
+uint8_t handle_data(uint8_t* data, uint8_t length);

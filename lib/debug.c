@@ -7,10 +7,11 @@ void log_init(void) {
     LINBRR = 0x0C;
 }
 
-void log_uart(char* msg, int len) {
-    for (int i = 0; i < len; i++) {
+void log_uart(char* msg) {
+    while (*msg) {
         loop_until_bit_is_clear(LINSIR, LBUSY);
-        LINDAT = (uint8_t)msg[i];
+        LINDAT = (uint8_t)*msg;
+        msg++;
     }
 
     loop_until_bit_is_clear(LINSIR, LBUSY);

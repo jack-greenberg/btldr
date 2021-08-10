@@ -4,8 +4,8 @@
  *
  * @author Jack Greenberg <j@jackgreenberg.co>
  */
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
 #include <util/delay.h>
 
 #include "config.h"
@@ -13,7 +13,7 @@
 #include "image.h"
 
 #define LED0 (PD6)
-#define BLINK_DELAY (250) // ms
+#define BLINK_DELAY (250)  // ms
 
 image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
     .image_magic = IMAGE_MAGIC,

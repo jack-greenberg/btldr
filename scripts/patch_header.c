@@ -8,8 +8,8 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "image.h"
 #include "crc32.h"
+#include "image.h"
 
 int main(int argc, char** argv) {
     if (argc != 2) {

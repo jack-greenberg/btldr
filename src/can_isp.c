@@ -3,67 +3,66 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <util/delay.h>
 
 #include "can_lib.h"
 #include "debug.h"
 #include "image.h"
 
-int start_app(void) {
-    const image_hdr_t* hdr = image_get_header();
-    int valid = image_validate(hdr);
-
-    if (valid == IMAGE_VALID) {
-        asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
-    } else {
-        return valid;
-    }
-    return 0;
-}
-
-bool is_programming = false;
-
-CAN_isp_status can_isp_task(void) {
-    CAN_isp_status st = CAN_ISP_ST_OK;
+uint8_t can_isp_task(void) {
+    uint8_t st = 0;
 
     uint8_t data[CAN_MAX_MSG_LENGTH];
-
-    Can_msg msg = {
+    Can_msg_t msg = {
         .data = data,
-        // Listen for any CAN message
         .mask = CAN_ISP_MASK,
         .id = 0x00,
-        // Accept up to 8 bytes
         .length = CAN_MAX_MSG_LENGTH,
     };
 
-    // Receive CAN message
-    can_receive(&msg);
-    // This shouldn't error because we always restore our MObs
+    // Receive CAN message. This shouldn't error because we always restore our
+    // message objects
+    (void)can_receive(&msg);
 
-    // TODO: what to do if there's an error
-    // TODO: Do we need a timeout?
-    while (can_poll_complete(&msg) == CAN_ST_NOT_READY)
-        ;
+    // Waits 10ms for a message
+    // TODO: Is this long enough?
+    while (can_poll_complete(&msg) == CAN_ST_NOT_READY) {
+        // _delay_ms(1U);
+    }
 
     switch (msg.id) {
-        case CAN_ID_NODE_SELECT: {
-            st = can_node_select(msg.data, msg.length);
+        case CAN_ID_QUERY: {
+            st = handle_query(msg.data, msg.length);
             break;
         }
-        case CAN_ID_SESSION_START: {
-            can_session_start(msg.data, msg.length);
+        case CAN_ID_RESET: {
+            st = handle_reset(msg.data, msg.length);
+            if (st != 0) {
+                // Image is invalid
+            }
+            break;
+        }
+        case CAN_ID_REQUEST: {
+            st = handle_request(msg.data, msg.length);
             break;
         }
         case CAN_ID_DATA: {
-            can_data(msg.data, msg.length);
-            break;
-        }
-        case CAN_ID_START_APP: {
-            can_start_app(msg.data, msg.length);
+            st = handle_data(msg.data, msg.length);
             break;
         }
         default: {
-            // TODO: Transmit error
+            uint8_t data[1] = {
+                ERR_INVALID_COMMAND,
+            };
+
+            Can_msg_t msg = {
+                .mob = CAN_AUTO_MOB,
+                .mask = CAN_NO_FILTERING,
+                .id = CAN_ID_ERROR,
+                .data = data,
+                .length = 4,
+            };
+            st = can_transmit(&msg);
             break;
         }
     }

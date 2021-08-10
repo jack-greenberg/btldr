@@ -1,170 +1,143 @@
 #include <avr/io.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "can_isp.h"
 #include "can_lib.h"
-#include "config.h"  // TODO: Shouldn't have to reference like this
+#include "config.h"  // TODO: Btldr version should be from eeprom
 #include "flash.h"
 #include "image.h"
 
-extern bool is_programming;
-
-// Current (unprogrammed) memory address
-static uint16_t program_memory_address;
-
-// Number of bytes remaining to program
-static uint16_t program_memory_num_bytes;
+static struct SessionData session = {
+    .is_active = false,
+    .type = 0,
+    .current_addr = {0},
+    .remaining_size = {0},
+};
 
 // Temporary page buffer
-static uint8_t temp_buffer[PAGESIZE_B] = {0xFF};
+static uint8_t temp_buffer[PAGESIZE_B] = { 0 };
 static uint8_t buffer_size = 0;
 
-CAN_isp_status can_node_select(uint8_t *data, uint8_t length) {
-    Can_msg resp = {
+/*************************************************
+ * Handler functions defined in can_isp_commands.c
+ **************************************************/
+
+uint8_t handle_query(uint8_t* data, uint8_t length) {
+    uint8_t st = 0;
+
+    Can_msg_t response = {
         .mob = CAN_AUTO_MOB,
         .mask = 0x00,
-        .id = CAN_ID_SESSION_START,
+        .id = CAN_ID_QUERY_RESPONSE,
     };
 
-    uint8_t version =
-        ((BOOTLOADER_VERSION_MAJ & 0xF) << 4) | (BOOTLOADER_VERSION_MIN & 0xF);
+    // TODO:
+    //   Get bootloader version from EEPROM
+    uint8_t version = ((BOOTLOADER_VERSION_MAJ & 0xF) << 4)
+                      | (BOOTLOADER_VERSION_MIN & 0xF);
 
-    uint8_t resp_data[2] = {0x00, version};
+    // TODO: Use getter function
+    uint8_t chip = CHIP_AVR_ATMEGA16M1;
 
-    switch (data[0]) {
-        case NODE_SELECT_OPEN: {
-            if (is_programming) {
-                is_programming = false;
-                resp_data[0] = RESP_SELECT_CLOSED;
-            } else {
-                is_programming = true;
-                resp_data[0] = RESP_SELECT_OPENED;
-            }
-            break;
-        }
-        case NODE_SELECT_QUERY: {
-            resp_data[0] =
-                is_programming ? RESP_SELECT_OPENED : RESP_SELECT_CLOSED;
-            break;
-        }
-    }
+    uint8_t response_data[] = {version, chip};  // TODO: What else?
+    response.data = response_data;
+    response.length = 2;
 
-    resp.data = resp_data;
-    resp.length = 2;
+    st = can_transmit(&response);
 
-    can_transmit(&resp);
-
-    return CAN_ISP_ST_OK;
+    return st;
 }
 
-CAN_isp_status can_session_start(uint8_t *data, uint8_t length) {
-    program_memory_address = 0x00;
-    program_memory_num_bytes = (data[1] << 8) | data[2];
+uint8_t handle_reset(uint8_t* data, uint8_t length) {
+    uint8_t st = 0;
 
-    switch (data[0]) {
-        case SESSION_UPLOAD: {
-            uint8_t msg[1] = {0x00};
-            Can_msg resp = {
-                .mob = CAN_AUTO_MOB,
-                .mask = 0x00,
-                .id = CAN_ID_SESSION_START,
-                .length = 1,
-                .data = msg,
-            };
+    // Validate image
+    const image_hdr_t* image_hdr = image_get_header();
+    uint8_t valid = image_validate(image_hdr);
 
-            can_transmit(&resp);
-            break;
-        }
-        case SESSION_DOWNLOAD: {
-            const image_hdr_t *hdr = image_get_header();
-            uint16_t image_size = hdr->image_size;  // TODO: 32 bits or 16?
-            uint8_t msg[8];
-
-            for (uint16_t i = image_size; i >= 0; i -= 8) {
-                uint16_t addr = image_size - i;
-                uint16_t size = i % 8 == 0 ? 8 : i % 8;
-
-                flash_read(addr, msg, size);
-
-                Can_msg resp = {
-                    .mob = CAN_AUTO_MOB,
-                    .mask = 0x00,
-                    .id = CAN_ID_SESSION_START,
-                    .length = size,
-                    .data = msg,
-                };
-
-                can_transmit(&resp);
-            }
-        }
-        default: {
-            break;
-        }
-    }
-
-    return CAN_ISP_ST_OK;
-}
-
-CAN_isp_status can_data(uint8_t *data, uint8_t length) {
-    for (uint8_t i = 0; i < length; i++) {
-        temp_buffer[buffer_size] = *data++;
-
-        buffer_size++;
-        program_memory_num_bytes--;
-        program_memory_address++;
-    }
-
-    if (buffer_size >= PAGESIZE_B || program_memory_num_bytes == 0) {
-        uint16_t page_address =
-            program_memory_address - (program_memory_address % PAGESIZE_B);
-        flash_write(temp_buffer, page_address);
-
-        // Reset buffer size
-        buffer_size = 0;
-    }
-
-    Can_msg resp = {
-        .mob = CAN_AUTO_MOB,
-        .mask = 0x00,
-        .id = CAN_ID_DATA,
-        .length = 1,
-    };
-
-    uint8_t resp_data[1];
-    if (program_memory_num_bytes != 0) {
-        resp_data[0] = RESP_DATA_OK;
+    if (valid == IMAGE_VALID) {
+        // Indicate jumping with CAN message?
+        // Clear bootflag
+        jump_to_app();
     } else {
-        resp_data[0] = RESP_DATA_EOF;
+        // Transmit error with invalid image and reason for invalid
+        uint8_t data[2] = {ERR_IMAGE_INVALID, valid};
+        Can_msg_t response = {
+            .mob = CAN_AUTO_MOB,
+            .mask = CAN_NO_FILTERING,
+            .id = CAN_ID_ERROR,
+            .data = data,
+            .length = 2,
+        };
+
+        st = can_transmit(&response);
     }
 
-    resp.data = resp_data;
-    can_transmit(&resp);
-
-    return CAN_ISP_ST_OK;
+    // Unreachable if image is valid
+    return st;
 }
 
-CAN_isp_status can_start_app(uint8_t *msg, uint8_t length) {
-    CAN_isp_status st;
-    const image_hdr_t *img_hdr = image_get_header();
+uint8_t handle_request(uint8_t* data, uint8_t length) {
+    uint8_t st = 0;
+    if (session.is_active) {
+        uint8_t data[5] = {
+            ERR_SESSION_EXISTS,
+            session.current_addr.bytes[0],
+            session.current_addr.bytes[1],
+            session.remaining_size.bytes[0],
+            session.remaining_size.bytes[1],
+        };
 
-    Can_msg resp = {
-        .id = CAN_ID_START_APP,
-        .mask = CAN_NO_FILTERING,
-        .mob = CAN_AUTO_MOB,
-        .length = 1,
-    };
-
-    uint8_t resp_data[1];
-    if (!image_validate(img_hdr)) {  // TODO: Remove `!`
-        resp_data[0] = RESP_START_IMAGE_INVALID;
-        st = CAN_ISP_ST_ERROR;
-    } else {
-        resp_data[0] = RESP_START_OK;
-        st = CAN_ISP_ST_OK;
+        Can_msg_t msg = {
+            .mob = CAN_AUTO_MOB,
+            .mask = CAN_NO_FILTERING,
+            .id = CAN_ID_ERROR,
+            .data = data,
+            .length = 4,
+        };
+        st = can_transmit(&msg);
+        goto bail;
     }
 
-    resp.data = resp_data;
-    can_transmit(&resp);
+    session.is_active = true;
+    session.type = data[0];
+
+    if (data[0] == REQUEST_DOWNLOAD) {
+        session.current_addr.word = 0;
+        session.remaining_size.bytes[0] = data[1];
+        session.remaining_size.bytes[1] = data[2];
+    } else if (data[0] == REQUEST_UPLOAD) {
+        session.current_addr.word = 0;
+        session.remaining_size.word = 0;  // Get image size from header
+    } else {
+    }
+
+bail:
+    return st;
+}
+
+uint8_t handle_data(uint8_t* data, uint8_t length) {
+    uint8_t st = 0;
+    if (!session.is_active) {
+        uint8_t data[1] = {
+            ERR_NO_SESSION,
+        };
+
+        Can_msg_t msg = {
+            .mob = CAN_AUTO_MOB,
+            .mask = CAN_NO_FILTERING,
+            .id = CAN_ID_ERROR,
+            .data = data,
+            .length = 1,
+        };
+        st = can_transmit(&msg);
+        goto bail;
+    }
+
+    // Write data to temporary buffer
+
+bail:
     return st;
 }

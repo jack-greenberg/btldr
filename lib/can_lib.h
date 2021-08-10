@@ -20,7 +20,7 @@ typedef struct {
     uint16_t mask;
     uint16_t id;
     uint8_t length;
-} Can_msg;
+} Can_msg_t;
 
 /*
  * Extern call to can_drv.h
@@ -34,7 +34,7 @@ void can_init(void);
  *   CAN_ST_OK    - Message set for reception
  *   CAN_ST_ERROR - No free MObs
  */
-CAN_status can_receive(Can_msg *msg);
+CAN_status can_receive(Can_msg_t *msg);
 
 /*
  * Sets CAN message to be sent
@@ -43,7 +43,7 @@ CAN_status can_receive(Can_msg *msg);
  *   CAN_ST_OK    - Message set for transmission
  *   CAN_ST_ERROR - No free MObs
  */
-CAN_status can_transmit(Can_msg *msg);
+CAN_status can_transmit(Can_msg_t *msg);
 
 /*
  * Checks for completion of CAN command
@@ -53,4 +53,4 @@ CAN_status can_transmit(Can_msg *msg);
  *   CAN_ST_ERROR     - Message error
  *   CAN_ST_NOT_READY - Message not sent/received
  */
-CAN_status can_poll_complete(Can_msg *msg);
+CAN_status can_poll_complete(Can_msg_t *msg);

@@ -7,7 +7,7 @@
 
 extern void can_init();
 
-CAN_status can_receive(Can_msg *msg) {
+CAN_status can_receive(Can_msg_t *msg) {
     msg->mob = can_get_free_mob();
 
     if (msg->mob == NO_MOB) {
@@ -25,7 +25,7 @@ CAN_status can_receive(Can_msg *msg) {
 }
 
 // TODO: Forgot to transmit the data
-CAN_status can_transmit(Can_msg *msg) {
+CAN_status can_transmit(Can_msg_t *msg) {
     if (msg->mob == CAN_AUTO_MOB) {
         msg->mob = can_get_free_mob();
     }
@@ -44,7 +44,7 @@ CAN_status can_transmit(Can_msg *msg) {
     return CAN_ST_OK;
 }
 
-CAN_status can_poll_complete(Can_msg *msg) {
+CAN_status can_poll_complete(Can_msg_t *msg) {
     uint8_t mob_st = can_get_mob_status(msg->mob);
 
     if (mob_st == MOB_ST_NOT_COMPLETE) {
