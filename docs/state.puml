@@ -1,0 +1,86 @@
+@startuml
+title Software Update State Diagram
+
+/'
+' Legend
+' One color indicates state
+' One color indicates resource
+'/
+
+legend top left 
+| Color       | Type            |
+|<#LightGreen>| Binary Image    |
+|<#ffffcc>  | Updater State   |
+|<#LightBlue> | Shared resource |
+endlegend
+
+state App #lightgreen
+state Bootloader #lightgreen
+
+[*] -> Bootloader: reset
+Bootloader --> App: Bootflag == 0
+
+state Updater #lightgreen {
+  state "Initialize CAN" as CanInit
+  state "Waiting for CAN" as CanWait
+  state "Query Respond" as CanQuery
+  state "Active Session" as Session 
+  state "Download Session" as DLSession
+  state "Upload Session" as ULSession 
+  state Flashing: Writing temporary buffer\nto NVM
+  state "Session Complete" as SessionDone
+  state "Validate image" as Validate
+
+  CanInit -r> CanWait
+  CanWait -u-> CanQuery: CAN_ID_QUERY
+  CanQuery -d-> CanWait
+
+  CanWait -u-> CanWait: CAN_ID_DATA
+  note on link: Do nothing (other ECU\nis being programmed)
+
+  Session -> Session: CAN_ID_SESSION
+  note on link: ERR_SESSION_EXISTS
+  Session --> DLSession: CAN message\nbegins with 0x01
+  Session --> ULSession: CAN message\nbegins with 0x00
+
+  CanWait --> Session: CAN_ID_SESSION
+  ULSession -> ULSession: CAN_ID_DATA
+  ULSession --> Flashing: Temporary \n buffer is full
+  Flashing --> ULSession
+  note on link: Fills up temporary buffer\nuntil buffer is full
+
+  DLSession --> DLSession: Sending CAN_ID_DATA\nmessages to the\nhost/client
+
+  DLSession --> SessionDone: All data has been sent
+  ULSession --> SessionDone: All data is written
+
+  SessionDone --> Validate: CAN_ID_RESET
+  Validate --> CanWait: Image is invalid\nAwait new commands
+
+  CanWait: Waiting for specific\nCAN IDs related to\nthe updater.\n\n\n
+  CanQuery: Respond to host client with:\n* updater version\n* flash timestamp\n* ...
+  DLSession: Request from client to\ndownload current software\n\nCounts down from image\nsize to 0 while\ndata is being sent
+  ULSession: Request from client to\nflash new software\n\nSends CAN_ID_STATUS which\nincludes expected data\nremaining and status code
+  Validate: Validate that image is\ncorrect using CRC and\n"magic"
+}
+
+Bootloader ----> CanInit: Bootflag == 1
+
+Validate -> App: Image is valid\nClear bootflag\n`jmp 0x0000`
+
+state EEPROM <<sdlreceive>> #lightblue
+
+Bootloader -up[dashed]-> EEPROM: Query bootflag
+EEPROM -down[dashed]-> Bootloader
+
+CanQuery -[dashed]> EEPROM
+EEPROM -[dashed]> CanQuery
+
+EEPROM: Shared memory for\nbootflags and version
+
+Updater: Performs software update, a separate image from the app
+App: Main software application image
+App: Includes image header
+
+note left of App: Header includes "magic",\nimage size, CRC, flash\ntimestamp, and git hash
+@enduml

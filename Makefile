@@ -127,3 +127,6 @@ clean:
 .PHONY: lint
 lint:
 	clang-format -i --style=file lib/* src/* scripts/*
+
+docs/state.png: docs/state.puml
+	plantuml $<
