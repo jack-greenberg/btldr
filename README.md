@@ -30,10 +30,10 @@ done.  Please do one `[x]` per PR.
 
 ## ToDo
 
-- [ ] CAN [ ] Driver [ ] Library [ ] ISP command library [ ] Flash [ ] Driver [
-- ] Library [ ] ISP Library [ ] Blinky (`main.c`) [ ] Build system (improving
-- the Makefile) [ ] Documentation [ ] Main bootloader (`btldr.c`) This is
-- mostly done, and @greenberg-jack is working on it
+- [ ] Update `can_isp_commands` to use `boot_page_fill` instead of `temp_buffer`
+- [ ] Update to use builtin crc16
+- [ ] Client
+- [ ] Reset handling
 
 ## Notes
 
