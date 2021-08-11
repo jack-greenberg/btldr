@@ -25,7 +25,7 @@ int main(void) {
     DDRD |= _BV(LED0);
 
     log_init();
-    log_uart("App initialized", 16);
+    log_uart("-- App --");
 
     for (;;) {
         PORTD ^= _BV(LED0);

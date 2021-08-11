@@ -3,4 +3,7 @@ BasedOnStyle: Google
 IndentWidth: 4
 AllowShortLoopsOnASingleLine: true
 BreakBeforeBinaryOperators: All
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
 ...

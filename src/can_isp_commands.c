@@ -5,9 +5,9 @@
 
 #include "can_isp.h"
 #include "can_lib.h"
-#include "config.h"  // TODO: Btldr version should be from eeprom
 #include "flash.h"
 #include "image.h"
+#include "shared_mem.h"
 
 static struct SessionData session = {
     .is_active = false,
@@ -17,8 +17,10 @@ static struct SessionData session = {
 };
 
 // Temporary page buffer
-static uint8_t temp_buffer[PAGESIZE_B] = { 0 };
-static uint8_t buffer_size = 0;
+// TODO: Use boot_page_fill instead of this temp buffer so that we don't need an
+// additional buffer
+// static uint8_t temp_buffer[PAGESIZE_B] = { 0 };
+// static uint8_t buffer_size = 0;
 
 /*************************************************
  * Handler functions defined in can_isp_commands.c
@@ -35,8 +37,9 @@ uint8_t handle_query(uint8_t* data, uint8_t length) {
 
     // TODO:
     //   Get bootloader version from EEPROM
-    uint8_t version = ((BOOTLOADER_VERSION_MAJ & 0xF) << 4)
-                      | (BOOTLOADER_VERSION_MIN & 0xF);
+    // uint8_t version = ((BOOTLOADER_VERSION_MAJ & 0xF) << 4)
+    //                   | (BOOTLOADER_VERSION_MIN & 0xF);
+    uint8_t version = updater_get_version();
 
     // TODO: Use getter function
     uint8_t chip = CHIP_AVR_ATMEGA16M1;

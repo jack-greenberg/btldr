@@ -18,13 +18,17 @@ SRCS_BOOT = \
 			src/can_isp.c \
 			src/can_isp_commands.c
 
+SRCS_SHMEM = \
+			 lib/shared_mem.c
+
 SRCS_SHARED = \
 			  lib/image.c \
 			  lib/can_drv.c \
 			  lib/can_lib.c \
 			  lib/flash.c \
 			  lib/debug.c \
-			  lib/crc32.c
+			  lib/crc32.c \
+			  $(SRCS_SHMEM)
 
 INCLUDES += lib
 
@@ -60,6 +64,11 @@ LDFLAGS = \
 		  -nostartfiles \
 		  -T $(LDSCRIPT)
 
+EEPFLAGS = \
+		   -j .eeprom \
+		   --change-section-lma .eeprom=0 \
+		   --set-section-flags=.eeprom="alloc,load"
+
 AVRDUDE_FLAGS = \
 				-p 16m1 \
 				-c $(PROGRAMMER) \
@@ -73,7 +82,7 @@ CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
 # Fuses
-# Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D8&EXTENDED=FF&LOCKBIT=3F
+# Calculate here: https://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega16m1&LOW=65&HIGH=D8&EXTENDED=FE&LOCKBIT=CF
 LFUSE = lfuse:w:0x65:m
 HFUSE = hfuse:w:0xD8:m
 EFUSE = efuse:w:0xFE:m
@@ -81,16 +90,18 @@ LOCKBITS_LOCK = lock:w:0xCF:m
 LOCKBITS_UNLOCK = lock:w:0xFF:m
 
 .PHONY: all
-all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).bin
+all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).eep
+
+$(BUILD_DIR)/%.eep: $(BUILD_DIR)/%.elf
+	$(OBJCOPY) $(EEPFLAGS) -O ihex $< $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf #patch_header
-	$(OBJCOPY) $< $@ -O ihex
+	$(OBJCOPY) $< $@ -R .eeprom -O ihex
 	# TODO: Patch header
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf patch_header
-	$(OBJCOPY) $< $@ -O binary
+	$(OBJCOPY) -O binary -R .eeprom $< $@
 	$(BUILD_DIR)/patch_header $@
-
 
 $(BUILD_DIR)/$(PROJECT).elf: $(SRCS_BOOT)
 	@mkdir -p $(BUILD_DIR)
@@ -104,12 +115,13 @@ patch_header: scripts/patch_header.c
 	@mkdir -p $(BUILD_DIR)
 	gcc -DDEBUG -Ilib -o $(BUILD_DIR)/$@ $^ lib/crc32.c
 
-flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex
+flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(PROJECT).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) \
 		-U $(LFUSE) \
 		-U $(HFUSE) \
 		-U $(EFUSE) \
 		-U $(LOCKBITS_UNLOCK) \
+		-U eeprom:w:$(BUILD_DIR)/$(PROJECT).eep:i \
 		-U flash:w:$(BUILD_DIR)/$(PROJECT).hex:i \
 		-U $(LOCKBITS_LOCK) \
 		-U flash:w:$(BUILD_DIR)/$(APP).bin:r

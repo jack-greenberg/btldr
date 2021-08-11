@@ -5,9 +5,7 @@
 
 void crc32(uint8_t *data, size_t n_bytes, uint32_t *crc) {
     *crc = ~0;
-    for (size_t i = 0; i < n_bytes; i++) {
-        crc32_step(*data++, crc);
-    }
+    for (size_t i = 0; i < n_bytes; i++) { crc32_step(*data++, crc); }
     *crc = ~*crc;
 }
 
