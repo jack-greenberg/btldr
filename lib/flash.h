@@ -2,20 +2,19 @@
 #include <inttypes.h>
 
 // Page size in bytes
-#define PAGESIZE_B (SPM_PAGESIZE)
-
-typedef union {
-    uint16_t word;
-    uint8_t byte[2];
-} dword_t;
+#define PAGESIZE_B (int)(SPM_PAGESIZE*2)
 
 /*
- * Writes a page to flash memory
+ * Handles filling temporary buffer with flash data
  *
- * @param [in] data     Pointer to data to write
- * @param [in] address  Address to write
+ * Keeps track of the size and address of the buffer and will write the buffer
+ * when it fills up. Assumes the data will start writing at 0, including the
+ * image header.
+ *
+ * @param [in] data    Pointer to data to write
+ * @param [in] length  Length of the data
  */
-void flash_write(uint8_t *data, uint16_t address);
+void flash_write(uint8_t *data, uint8_t length, uint16_t* current_addr);
 
 /*
  * Reads a section of flash memory

@@ -41,11 +41,8 @@
 /**
  * Jumps to application
  *
- * This function does NOT do image validation, and should be paired with a
+ * This macro does NOT do image validation, and should be paired with a
  * function that checks the validity of the image.
- *
- * @returns
- *   Does not return if image is valid
  */
 #define jump_to_app() asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
 
@@ -54,7 +51,7 @@ union Address {
     uint8_t bytes[2];
 };
 
-struct SessionData {
+struct session_data {
     bool is_active;  // Is in a session (upld or dwld)
     uint8_t type;    // 0 for download, 1 for upload
     union {

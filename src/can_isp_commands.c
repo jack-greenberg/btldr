@@ -9,7 +9,7 @@
 #include "image.h"
 #include "shared_mem.h"
 
-static struct SessionData session = {
+static struct session_data session = {
     .is_active = false,
     .type = 0,
     .current_addr = {0},
@@ -35,16 +35,12 @@ uint8_t handle_query(uint8_t* data, uint8_t length) {
         .id = CAN_ID_QUERY_RESPONSE,
     };
 
-    // TODO:
-    //   Get bootloader version from EEPROM
-    // uint8_t version = ((BOOTLOADER_VERSION_MAJ & 0xF) << 4)
-    //                   | (BOOTLOADER_VERSION_MIN & 0xF);
     uint8_t version = updater_get_version();
 
     // TODO: Use getter function
     uint8_t chip = CHIP_AVR_ATMEGA16M1;
 
-    uint8_t response_data[] = {version, chip};  // TODO: What else?
+    uint8_t response_data[] = {version, chip};
     response.data = response_data;
     response.length = 2;
 
@@ -61,17 +57,16 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
     uint8_t valid = image_validate(image_hdr);
 
     if (valid == IMAGE_VALID) {
-        // Indicate jumping with CAN message?
-        // Clear bootflag
+        bootflag_clear(UPDATE_REQUESTED);
         jump_to_app();
     } else {
         // Transmit error with invalid image and reason for invalid
-        uint8_t data[2] = {ERR_IMAGE_INVALID, valid};
+        uint8_t err_data[2] = {ERR_IMAGE_INVALID, valid};
         Can_msg_t response = {
             .mob = CAN_AUTO_MOB,
             .mask = CAN_NO_FILTERING,
             .id = CAN_ID_ERROR,
-            .data = data,
+            .data = err_data,
             .length = 2,
         };
 
@@ -85,7 +80,7 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
 uint8_t handle_request(uint8_t* data, uint8_t length) {
     uint8_t st = 0;
     if (session.is_active) {
-        uint8_t data[5] = {
+        uint8_t err_data[5] = {
             ERR_SESSION_EXISTS,
             session.current_addr.bytes[0],
             session.current_addr.bytes[1],
@@ -97,8 +92,8 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
             .mob = CAN_AUTO_MOB,
             .mask = CAN_NO_FILTERING,
             .id = CAN_ID_ERROR,
-            .data = data,
-            .length = 4,
+            .data = err_data,
+            .length = 5,
         };
         st = can_transmit(&msg);
         goto bail;
@@ -115,6 +110,18 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
         session.current_addr.word = 0;
         session.remaining_size.word = 0;  // Get image size from header
     } else {
+        uint8_t err_data[1] = {
+            ERR_INVALID_COMMAND,
+        };
+
+        Can_msg_t msg = {
+            .mob = CAN_AUTO_MOB,
+            .mask = CAN_NO_FILTERING,
+            .id = CAN_ID_ERROR,
+            .data = err_data,
+            .length = 4,
+        };
+        st = can_transmit(&msg);
     }
 
 bail:
@@ -124,7 +131,7 @@ bail:
 uint8_t handle_data(uint8_t* data, uint8_t length) {
     uint8_t st = 0;
     if (!session.is_active) {
-        uint8_t data[1] = {
+        uint8_t err_data[1] = {
             ERR_NO_SESSION,
         };
 
@@ -132,7 +139,7 @@ uint8_t handle_data(uint8_t* data, uint8_t length) {
             .mob = CAN_AUTO_MOB,
             .mask = CAN_NO_FILTERING,
             .id = CAN_ID_ERROR,
-            .data = data,
+            .data = err_data,
             .length = 1,
         };
         st = can_transmit(&msg);
@@ -140,6 +147,26 @@ uint8_t handle_data(uint8_t* data, uint8_t length) {
     }
 
     // Write data to temporary buffer
+    flash_write(data, length, &(session.current_addr.word));
+
+    session.remaining_size.word -= length;
+
+    // Status update
+    uint8_t status_data[4] = {
+        session.current_addr.bytes[0],
+        session.current_addr.bytes[1],
+        session.remaining_size.bytes[0],
+        session.remaining_size.bytes[1],
+    };
+
+    Can_msg_t msg = {
+        .mob = CAN_AUTO_MOB,
+        .mask = CAN_NO_FILTERING,
+        .id = CAN_ID_STATUS,
+        .data = status_data,
+        .length = 4,
+    };
+    st = can_transmit(&msg);
 
 bail:
     return st;
