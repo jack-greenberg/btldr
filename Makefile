@@ -8,7 +8,7 @@ BOOTSTART = 0x3000
 # Structure
 TARGET = btldr
 APP = main
-CLIENT = focan
+CLIENT = btldr
 
 BUILD_DIR = build
 
@@ -74,8 +74,7 @@ CFLAGS = \
 CFLAGS_CLIENT = \
 				-Wall \
 				-Werror \
-				-O2 \
-				-Wno-parentheses
+				-O2
 
 LDFLAGS = \
 		  -mmcu=$(MCU) \
