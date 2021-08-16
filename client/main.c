@@ -4,79 +4,110 @@
  */
 #include <errno.h>
 #include <getopt.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <libgen.h>
 
-#include "microjson/mjson.h"
+#include "can_client.h"
 
-struct ecu_t {
-    char name[64];
-    char description[512];
-    char designer[128];
-    int node_id;
-};
+char* prg;
 
-static struct ecu_t ecu;
-
-const struct json_attr_t ecu_attrs[] = {
-    {"name", t_string, .addr.string = ecu.name, .len = 64},
-    {"description", t_string, .addr.string = ecu.description, .len = 512},
-    {"designer", t_string, .addr.string = ecu.designer, .len = 128},
-    {"node_id", t_integer, .addr.integer = &ecu.node_id},
-};
-
-// static int verbose_flag;
-
-struct option long_options[] = {{"help", no_argument, 0, 'h'},
-                                {"verbose", no_argument, 0, 'v'},
-                                {NULL, 0, NULL, 0}};
-
-#define ERR_PRINT fprintf(stderr, 
-void print_usage(char* prg) {
+static void print_usage(char* prg, FILE* stream) {
     // clang-format off
-    fprintf(stderr, "%s - Flash Over CAN.\n", prg);
-    fprintf(stderr, "\nUsage: %s [options] <command> [args]\n", prg);
-    fprintf(stderr, "  %s flash <node_id> <hex_file>\n", prg);
-    fprintf(stderr, "  %s version <node_id>\n", prg);
-    fprintf(stderr, "  %s list\n", prg);
-    fprintf(stderr, "\nOptions:\n");
-    fprintf(stderr, "    -h, --help      Display this text and exit\n");
-    fprintf(stderr, "    -l, --ecu-list  Path to ecus.json file (default is in current directory)\n");
-    fprintf(stderr, "    -v, --verbose   Be very loud\n");
+    fprintf(stream, "%s - CAN software updater client\n\n", prg);
+    fprintf(stream, "Usage: %s [options] <command> [args]\n\n", prg);
+    fprintf(stream, "Options:\n");
+    fprintf(stream, "    -h  (display this text and exit)\n");
+    fprintf(stream, "    -v  (be verbose)\n\n");
+    fprintf(stream, "Commands:\n");
+    fprintf(stream, "  flash <node_id> <binary>\n");
+    fprintf(stream, "  ping [-a|<node_id>]\n\n");
     // clang-format on
 }
 
-int main(int argc, char** argv) {
-    char* cmd = argv[0];
-    int verbose_flag = 0;
+bool verbose = false;
 
-    int opt, optindex;
-    while ((opt = getopt_long(argc, argv, "-:hl:v", long_options, &optindex))
-           != -1) {
-        switch (opt) {
-            case 'h':
-                print_usage(cmd);
-                break;
-            case 'v':
-                verbose_flag = 1;
-                break;
-            case '?':
-            default:
-                fprintf(stderr, "Unknown option: %c\n", optopt);
-                print_usage(cmd);
-                return 1;
+// Pattern seen in git source
+static int handle_args(int* argc, char*** argv) {
+    while (*argc > 0) {
+        const char* cmd = (*argv)[0];
+        if (cmd[0] != '-') {
+            // Command
+            break;
         }
-    }
 
-    if (verbose_flag) {
-        printf("Verbose\n");
-    }
+        if (!strcmp(cmd, "-h") || !strcmp(cmd, "--help")) {
+            print_usage(prg, stdout);
+            exit(0);
+        } else if (!strcmp(cmd, "-v") || !strcmp(cmd, "--verbose")) {
+            verbose = true;
+        } else {
+            fprintf(stderr, "Unknown option: %s\n", (*argv)[0]);
+            print_usage(prg, stderr);
+            exit(1);
+        }
 
+        (*argc)--;
+        (*argv)++;
+    }
     return 0;
+}
+
+int main(int argc, char** argv) {
+    int rc;
+    prg = basename(argv[0]);
+
+    argv++; argc--;
+
+    handle_args(&argc, &argv);
+
+    if (verbose) {
+        printf("Found verbose flag.\n\n");
+    }
+
+    if (argc == 0) {
+        printf("No command specified\n");
+        print_usage(prg, stderr);
+        exit(1);
+    }
+
+    char* cmd = argv[0];
+
+    if (!strcmp(cmd, "flash")) {
+        if (argc != 3) {
+            fprintf(stderr, "Wrong number of args specified\n");
+            print_usage(prg, stderr);
+            exit(1);
+        }
+
+        uint8_t ecu_id = strtoul(argv[1], NULL, 16);
+        char* binary_path = argv[2];
+        rc = cmd_flash(ecu_id, binary_path);
+    } else if (!strcmp(cmd, "ping")) {
+        if (argc != 2) {
+            fprintf(stderr, "Wrong number of args specified\n");
+            print_usage(prg, stderr);
+            exit(1);
+        }
+
+        uint8_t ecu_id;
+        if (!strcmp(argv[1], "-a")) {
+            ecu_id = 0xFF;
+        } else {
+            ecu_id = strtoul(argv[1], NULL, 16);
+        }
+
+        rc = cmd_ping(ecu_id);
+    } else {
+        printf("Unknown command: %s\n", cmd);
+        print_usage(prg, stderr);
+        rc = 1;
+    }
+
+    return rc;
 }

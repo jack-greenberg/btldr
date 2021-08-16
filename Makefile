@@ -32,7 +32,8 @@ SRCS_SHMEM = \
 			 lib/shared_mem.c
 
 SRCS_CLIENT = \
-			  client/main.c
+			  client/main.c \
+			  client/can_client.c
 
 SRCS_SHARED = \
 			  lib/image.c \
@@ -47,7 +48,6 @@ INCLUDES += lib src
 
 SRCS_APP += lib/crc32.c lib/debug.c
 SRCS_BOOT += $(SRCS_SHARED)
-# SRCS_CLIENT += $(SRCS_SHARED)
 
 LDSCRIPT=atmega16m1.ld
 
@@ -134,7 +134,7 @@ $(BUILD_DIR)/$(APP).elf: $(SRCS_APP)
 
 patch_header: scripts/patch_header.c
 	@mkdir -p $(BUILD_DIR)
-	gcc -DDEBUG -Ilib -o $(BUILD_DIR)/$@ $^ lib/crc32.c
+	gcc -DDEBUG -Ilib -Wall -o $(BUILD_DIR)/$@ $^ lib/crc32.c
 
 flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(PROJECT).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) \

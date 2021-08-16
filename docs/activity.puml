@@ -1,0 +1,34 @@
+@startuml
+start
+-> reset;
+partition Bootloader {
+    :Check bootflag in EEPROM;
+}
+floating note: Bootloader addr "":= 0x3000""
+
+if (UPDATE_REQUESTED flag set) then (yes)
+    partition Updater {
+        :Init CAN;
+
+        repeat
+        :Poll for CAN message;
+        repeat while ()
+    }
+else (no)
+    :Validate image;
+
+    if (Image is valid) then (yes)
+        :""jmp 0x0000"";
+    else (no)
+        :goto ""Updater"";
+        stop
+    endif
+endif
+
+
+partition App {
+    :App init;
+}
+
+stop
+@enduml

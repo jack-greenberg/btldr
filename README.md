@@ -30,10 +30,13 @@ done.  Please do one `[x]` per PR.
 
 ## ToDo
 
-- [ ] Update `can_isp_commands` to use `boot_page_fill` instead of `temp_buffer`
+- [x] Update `can_isp_commands` to use `boot_page_fill` instead of `temp_buffer`
 - [ ] Update to use builtin crc16
 - [ ] Client
-- [ ] Reset handling
+- [ ] Reset handling (how to have ECUs reset themselves--just jump to boot
+  start?)
+- [ ] How to handle a common CAN command handling for all ECUs (to listen for
+  reset)
 
 ## Notes
 
@@ -45,21 +48,18 @@ Page 80:
 > section and Boot Lock bit BLB12 is programmed, interrupts are disabled while
 > executing from the Boot Loader section.
 
-We need to decide some things: on reset, should the bootloader execute first?
-Or do we go to the application? Either one is ok, but if we go to the
-bootloader first, we can just check to see why there was a reset, and if it
-wasn't a bootloader request, we jump to the application.
-
 Do we need to disable interrupts? Where should the interrupts be located?
 
 Would be nice to have a `#define LED1 PB0` pattern so that we can always refer
 to `LED1` and use `#ifdefs` to do things like blink an LED if there is an
 error, or set one as the error LED.
 
-It seems like we could try and figure out a way to write an arbitrary amount of
-data by filling the page buf and checking to see if it is full, and then
-writing, but that might be more complicated. In theory, we are writing
-contiguous sections of memory, so we shouldn't run into too many issues, but it
-would be worth considering the things that could go wrong. The alternative is
-doing a Read-Modify-Write each time we want to write data. So we read the whole
-page to the temp buffer, modify the buffer, and then write it back.
+## Patch Header
+
+* Compile-time
+  * Image size
+  * CRC
+* Flash-time
+  * Timestamp
+* Both
+  * Verify image magic

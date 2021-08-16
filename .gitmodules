@@ -1,3 +1,0 @@
-[submodule "client/microjson"]
-	path = client/microjson
-	url = https://gitlab.com/esr/microjson.git

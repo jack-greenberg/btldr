@@ -16,7 +16,7 @@
 typedef struct __attribute__((packed)) {
     uint32_t image_magic;
     uint32_t crc;
-    uint16_t image_size;
+    uint16_t image_size; // size without header
     uint64_t flash_timestamp;
     uint32_t reserved;
     char git_sha[8];
