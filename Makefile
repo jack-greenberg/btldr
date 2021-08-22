@@ -33,7 +33,9 @@ SRCS_SHMEM = \
 
 SRCS_CLIENT = \
 			  client/main.c \
-			  client/can_client.c
+			  client/can_client.c \
+			  client/commands.c \
+			  third_party/log/src/log.c
 
 SRCS_SHARED = \
 			  lib/image.c \
@@ -74,6 +76,10 @@ CFLAGS = \
 CFLAGS_CLIENT = \
 				-Wall \
 				-Werror \
+				-Ithird_party/log/src \
+				-Isrc \
+				-Ilib \
+				-DLOG_USE_COLOR \
 				-O2
 
 LDFLAGS = \

@@ -13,17 +13,24 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include "log.h"
+#include "commands.h"
 #include "can_client.h"
+
+#define VERSION_MAJ 0
+#define VERSION_MIN 1
 
 char* prg;
 
 static void print_usage(char* prg, FILE* stream) {
     // clang-format off
-    fprintf(stream, "%s - CAN software updater client\n\n", prg);
+    fprintf(stream, "%s - CAN software updater client    [version %i.%i]\n\n", prg, VERSION_MAJ, VERSION_MIN);
     fprintf(stream, "Usage: %s [options] <command> [args]\n\n", prg);
     fprintf(stream, "Options:\n");
-    fprintf(stream, "    -h  (display this text and exit)\n");
-    fprintf(stream, "    -v  (be verbose)\n\n");
+    fprintf(stream, "    -h,--help     (display this text and exit)\n");
+    fprintf(stream, "    -v,--verbose  (be verbose)\n");
+    fprintf(stream, "    -V,--version  (show version)\n");
+    fprintf(stream, "    -d,--device   (can device: can0, vcan0)\n\n");
     fprintf(stream, "Commands:\n");
     fprintf(stream, "  flash <node_id> <binary>\n");
     fprintf(stream, "  ping [-a|<node_id>]\n\n");
@@ -31,13 +38,14 @@ static void print_usage(char* prg, FILE* stream) {
 }
 
 bool verbose = false;
+char* device;
 
 // Pattern seen in git source
 static int handle_args(int* argc, char*** argv) {
     while (*argc > 0) {
         const char* cmd = (*argv)[0];
         if (cmd[0] != '-') {
-            // Command
+            // Reached a command
             break;
         }
 
@@ -46,6 +54,10 @@ static int handle_args(int* argc, char*** argv) {
             exit(0);
         } else if (!strcmp(cmd, "-v") || !strcmp(cmd, "--verbose")) {
             verbose = true;
+        } else if (!strcmp(cmd, "-d") || !strcmp(cmd, "--device")) {
+            device = (*argv)[1];
+            (*argc)--;
+            (*argv)++;
         } else {
             fprintf(stderr, "Unknown option: %s\n", (*argv)[0]);
             print_usage(prg, stderr);
@@ -66,9 +78,13 @@ int main(int argc, char** argv) {
 
     handle_args(&argc, &argv);
 
-    if (verbose) {
-        printf("Found verbose flag.\n\n");
+    if (!verbose) {
+        log_set_level(LOG_ERROR);
+    } else {
+        log_info("Running in verbose mode");
     }
+
+    // log_info("Device found: %s", device);
 
     if (argc == 0) {
         printf("No command specified\n");
@@ -108,6 +124,8 @@ int main(int argc, char** argv) {
         print_usage(prg, stderr);
         rc = 1;
     }
+
+    can_client_destroy();
 
     return rc;
 }
