@@ -13,6 +13,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <poll.h>
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -88,7 +89,23 @@ int can_send(uint16_t id, uint8_t* data, uint8_t dlc) {
     return 0;
 }
 
-int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data) {
+int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout) {
+    struct pollfd fds = {
+        .fd = client.s,
+        .events = POLLIN,
+    };
+
+    log_trace("Polling receive...");
+
+    if (poll(&fds, 1, timeout) < 0) {
+        log_error("Failed to poll for CAN message");
+        return 1;
+    }
+
+    if ((fds.revents & POLLIN) == 0) {
+        return -1;
+    }
+
     int nbytes = read(client.s, &client.frame, sizeof(struct can_frame));
 
     if (nbytes < 0) {

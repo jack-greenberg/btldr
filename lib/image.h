@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -12,13 +13,6 @@
 #define CHIP_AVR_ATMEGA16M1 (0x001U)
 #define CHIP_AVR_ATMEGA328P (0x002U)
 #define CHIP_ARM_STM32F103C8T6 (0x003U)
-
-char* chip_id_to_name[4] = {
-    [CHIP_NONE] = "unknown",
-    [CHIP_AVR_ATMEGA16M1] = "atmega16m1",
-    [CHIP_AVR_ATMEGA328P] = "atmega328p",
-    [CHIP_ARM_STM32F103C8T6] = "CHIP_ARM_STM32F103C8T6",
-};
 
 typedef struct __attribute__((packed)) {
     uint32_t image_magic;

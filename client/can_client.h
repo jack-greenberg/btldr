@@ -31,6 +31,8 @@ void can_client_destroy(void);
 int can_send(uint16_t id, uint8_t* data, uint8_t dlc);
 
 /*
- *
+ * Set timeout to positive milliseconds
+ * Set timeout negative to be infinite
+ * Set timeout to zero to instantly return
  */
-int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data);
+int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout);
