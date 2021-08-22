@@ -1,0 +1,33 @@
+@startuml
+:""btldr ping 0x1A"";
+:Send CAN message:
+
+""{""
+""  id: 0x1A0,""
+""  dlc: 0,""
+""  body: []""
+""}"";
+
+repeat :Listen for CAN message ""0x1A1"" (QUERY_RESPONSE);
+    if (Timeout?) then (yes)
+        :Log: ""Reply from 0x1A: Destination host unreachable."";
+        stop
+    endif
+repeat while (CAN message ""0x1A1"" received?) is (no) not (yes)
+
+:Received message:
+
+""{""
+""  id: 0x1A1,""
+""  dlc: 2,""
+""  body: [""
+""    BOOTLOADER_VERSION,""
+""    CHIP_ID,""
+""  ]""
+""}"";
+
+:Log: ""2 bytes from 0x1A: bootloader_version=0.1 chip_id=atmega16m1 time=0.12 ms"";
+
+stop
+
+@enduml

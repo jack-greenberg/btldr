@@ -1,0 +1,68 @@
+@startuml
+:""btldr flash 0x1A ./bazel-bin/vehicle/mkv/software/bms.bin"";
+
+:Run ping command to discover device;
+
+if (Device found?) then (yes)
+else (no)
+    stop
+endif
+
+:Ping successful;
+
+:Send CAN message:
+
+""{""
+""  id: 0x1A2, // SESSION_START""
+""  dlc: 3,""
+""  body: [""
+""    CAN_SESSION_UPLOAD, // Flashing session""
+""    binary_size, // Size of the image""
+""  ]""
+""}"";
+
+if (Session OK?) then (yes)
+else (no)
+    stop
+endif
+
+repeat
+:Get next binary chunk;
+:Send CAN message:
+
+""{""
+""  id: 0x1A4, // DATA""
+""  dlc: CHUNK_SIZE,""
+""  body: binary_chunk""
+""}"";
+
+repeat :Wait for DATA ACK;
+    if (Timeout?) then (yes)
+        stop
+    endif
+repeat while (CAN message ""0x1A5"" received?) is (no) not (yes)
+
+:Received CAN message:
+
+""{""
+""  id: 0x1A5, // DATA""
+""  dlc: 5,""
+""  body: [""
+""    STATUS_OK,""
+""    next_address_to_program,""
+""    expected_data_remaining""
+""  ]""
+""}"";
+
+repeat while (More data?) is (yes) not (no)
+
+:Send CAN reset message;
+
+if (Received message is IMAGE_VALID?) then (yes)
+    :Success;
+    end
+else (no)
+    :Flash failed. Image invalid.;
+    stop
+endif
+@enduml
