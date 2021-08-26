@@ -30,16 +30,22 @@ int main(void) {
 
     uint32_t flags = eeprom_read_dword(&bootflags);
     bool update_requested = ((flags & UPDATE_REQUESTED) != 0);
+    bool image_is_valid = ((flags & IMAGE_IS_VALID) != 0);
     // bool update_requested = bootflag_get(UPDATE_REQUESTED);
 
     if (!update_requested) {
-        jump_to_app();
-        log_uart("Jump failed, entering loop");
+        if (image_is_valid) {
+            // Jump to application with offset of image header size
+            asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
 
-        while (1) continue;
+            log_uart("Jump failed, entering loop");
+            while (1) continue;
+        } else {
+            log_uart("Image is corrupted or invalid, going into updater");
+        }
+    } else {
+        log_uart("Update requested, going into updater");
     }
-
-    log_uart("Update requested, going into updater");
 
     // Updater
     can_init();

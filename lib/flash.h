@@ -2,7 +2,7 @@
 #include <inttypes.h>
 
 // Page size in bytes
-#define PAGESIZE_B (int)(SPM_PAGESIZE*2)
+#define PAGESIZE_B (int)(SPM_PAGESIZE * 2)
 
 /*
  * Handles filling temporary buffer with flash data
@@ -14,7 +14,7 @@
  * @param [in] data    Pointer to data to write
  * @param [in] length  Length of the data
  */
-void flash_write(uint8_t *data, uint8_t length, uint16_t* current_addr);
+void flash_write(uint8_t *data, uint8_t length, uint16_t *current_addr);
 
 /*
  * Reads a section of flash memory

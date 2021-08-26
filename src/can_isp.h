@@ -38,14 +38,6 @@
 #define CAN_ISP_MASK (0x000)    // No filtering
 #define CAN_MAX_MSG_LENGTH (8)  // Always accept up to 8 bytes
 
-/**
- * Jumps to application
- *
- * This macro does NOT do image validation, and should be paired with a
- * function that checks the validity of the image.
- */
-#define jump_to_app() asm("jmp %0" ::"I"(sizeof(image_hdr_t)));
-
 union Address {
     uint16_t word;
     uint8_t bytes[2];

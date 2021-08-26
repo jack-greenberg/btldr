@@ -58,7 +58,10 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
 
     if (valid == IMAGE_VALID) {
         bootflag_clear(UPDATE_REQUESTED);
-        jump_to_app();
+        bootflag_set(IMAGE_IS_VALID);
+
+        // Back to bootloader
+        asm("jmp 0x3000"); // TODO How to get bootstart address?
     } else {
         // Transmit error with invalid image and reason for invalid
         uint8_t err_data[2] = {ERR_IMAGE_INVALID, valid};

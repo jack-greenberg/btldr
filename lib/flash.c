@@ -5,13 +5,13 @@
 #include <avr/pgmspace.h>
 #include <inttypes.h>
 
-void flash_write(uint8_t *data, uint8_t length, uint16_t* current_addr) {
+void flash_write(uint8_t *data, uint8_t length, uint16_t *current_addr) {
     static uint16_t buf_address = 0;
     uint8_t sreg = SREG;
 
     uint16_t wr_data = 0xFFFF;
-    
-    uint8_t even_length = (length % 2 == 0) ? length : length+1;
+
+    uint8_t even_length = (length % 2 == 0) ? length : length + 1;
 
     for (int i = 0; i < even_length; i++) {
         if (i % 2 == 0) {
@@ -20,7 +20,7 @@ void flash_write(uint8_t *data, uint8_t length, uint16_t* current_addr) {
             if (i == length) {
                 wr_data |= 0xFF00;
             } else {
-                wr_data |= data[i+1] << 8;
+                wr_data |= data[i + 1] << 8;
             }
             boot_page_fill_safe(buf_address, wr_data);
         }

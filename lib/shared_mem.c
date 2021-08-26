@@ -15,7 +15,8 @@
 #define BOOTLOADER_VERSION_MIN (1)
 
 // TODO: Reset to bootflags 0 after testing
-uint32_t bootflags __attribute__((section(".eeprom"))) = 1;
+uint32_t bootflags __attribute__((section(".eeprom")))
+= UPDATE_REQUESTED;
 
 uint8_t updater_version __attribute__((section(".eeprom")))
 = (BOOTLOADER_VERSION_MAJ << 4) | (BOOTLOADER_VERSION_MIN & 0xF);
