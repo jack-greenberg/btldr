@@ -15,6 +15,7 @@
 
 #define POLLTIMEOUT (1000)
 #define MAX_RETRIES (5)
+#define PING_BROADCAST (0xFF)
 
 char* chip_id_to_name[4] = {
     [CHIP_NONE] = "unknown",
@@ -31,8 +32,17 @@ int cmd_flash(uint8_t ecu_id, char* binary_path) {
 int cmd_ping(uint8_t ecu_id) {
     log_info("Pinging id 0x%X", ecu_id);
 
-    uint16_t can_filter_id = ecu_id << 4;
-    uint16_t can_filter_mask = 0x7FE; // Only receive the next inc. message
+    uint16_t can_filter_id;
+    uint16_t can_filter_mask;
+
+    if (ecu_id == PING_BROADCAST) {
+        can_filter_id = 0x001;
+        can_filter_mask = 0x007; // xxxxxxx0001 to match ping responses
+    } else {
+        can_filter_id = (ecu_id << 4) & 0x1;
+        can_filter_mask = 0x7FF;
+    }
+
     int rc = init_can_client(can_filter_id, can_filter_mask);
     if (rc != 0) {
         goto bail;
@@ -56,7 +66,7 @@ int cmd_ping(uint8_t ecu_id) {
         num_tries++;
     } while ((rc == -1) && (num_tries < MAX_RETRIES));
 
-    if (num_tries == MAX_RETRIES) {
+    if ((num_tries == MAX_RETRIES) && (rc == -1)) {
         printf("Failed to receive ping response. Device unreachable.\n");
         rc = 2; // timeout
         goto bail;
