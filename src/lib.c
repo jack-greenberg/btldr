@@ -54,27 +54,18 @@ void updater_loop(void) {
     CAN_status st = can_poll_complete(&can_msg);
 
     if ((st == CAN_ST_NOT_READY) || (st == CAN_ST_ERROR)) {
-        // TODO: Handle CAN error by sending an error message or logging?
         return;
     }
 
     switch (can_msg.id) {
         case CAN_ID_QUERY: {
-            // Send query response
             do_query(can_msg.data, can_msg.length);
         } break;
         case CAN_ID_RESET: {
-            // Jump to btldr
             do_reset(can_msg.data, can_msg.length);
         } break;
-        case CAN_ID_REQUEST: {
-            // Ignore?
-        } break;
-        case CAN_ID_DATA: {
-            // Ignore?
-        } break;
         default: {
-            // Ignore
+            // Ignore all other messages
         } break;
     }
 
