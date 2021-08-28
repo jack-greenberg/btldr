@@ -11,7 +11,15 @@ APP = main
 BUILD_DIR = build
 
 SRCS_APP = \
-		   src/main.c
+		   src/main.c \
+		   src/lib.c \
+		   lib/can_lib.c \
+		   lib/image.c \
+		   lib/can_drv.c \
+		   lib/shared_mem.c \
+		   src/can_isp_commands.c \
+		   lib/flash.c \
+		   src/can_isp.c
 
 SRCS_BOOT = \
 			src/btldr.c \
@@ -30,7 +38,7 @@ SRCS_SHARED = \
 			  lib/crc32.c \
 			  $(SRCS_SHMEM)
 
-INCLUDES += lib
+INCLUDES += lib src
 
 SRCS_APP += lib/crc32.c lib/debug.c
 SRCS_BOOT += $(SRCS_SHARED)

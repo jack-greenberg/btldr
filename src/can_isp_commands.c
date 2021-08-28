@@ -84,7 +84,8 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
     uint8_t st = 0;
     if (session.is_active) {
         uint8_t err_data[5] = {
-            ERR_SESSION_EXISTS,
+            // ERR_SESSION_EXISTS,
+            0, // TODO
             session.current_addr.bytes[0],
             session.current_addr.bytes[1],
             session.remaining_size.bytes[0],
@@ -135,7 +136,8 @@ uint8_t handle_data(uint8_t* data, uint8_t length) {
     uint8_t st = 0;
     if (!session.is_active) {
         uint8_t err_data[1] = {
-            ERR_NO_SESSION,
+            // ERR_NO_SESSION,
+            0 // TODO
         };
 
         Can_msg_t msg = {

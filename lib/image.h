@@ -25,3 +25,5 @@ typedef struct __attribute__((packed)) {
 const image_hdr_t* image_get_header(void);
 
 uint8_t image_validate(const image_hdr_t* hdr);
+
+uint64_t get_image_timestamp(void);
