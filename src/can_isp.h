@@ -28,7 +28,7 @@
  *
  * DLC = (upload) 3, (download) 1
  * [0]    => 0x0 for download, 0x1 for upload (upload == flash)
- * [1..2] => (upload-only) 16 bit image size 
+ * [1..2] => (upload-only) 16 bit image size
  */
 #define CAN_ID_REQUEST (0x004U)  // Upload or download
 #define REQUEST_DOWNLOAD (0x000U)
@@ -42,7 +42,6 @@
  */
 #define CAN_ID_DATA (0x006U)
 
-
 /*************
  * Responses *
  *************/
@@ -53,7 +52,8 @@
  * DLC = 8
  *
  * [0]    => bootloader version (MMMM.mmmm bits)
- * [1..3] => reserved
+ * [1]    => chip ID
+ * [2..3] => reserved
  * [4..7] => Time delta from query unix timestamp and flash timestamp
  */
 #define CAN_ID_QUERY_RESPONSE (0x001U)
@@ -68,9 +68,9 @@
 #define CAN_ID_ERROR (0x003U)
 
 // Error codes
-#define ERR_INVALID_COMMAND (0x000U) // Command unknown
+#define ERR_INVALID_COMMAND (0x000U)  // Command unknown
 // #define ERR_NO_SESSION (0x001U) // Data sent but session isn't active
-// #define ERR_TIMEOUT (0x002U) // 
+// #define ERR_TIMEOUT (0x002U) //
 // #define ERR_SESSION_EXISTS (0x003U) // Session command repeated
 #define ERR_IMAGE_INVALID (0x001U)
 
