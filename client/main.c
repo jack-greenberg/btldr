@@ -4,18 +4,18 @@
  */
 #include <errno.h>
 #include <getopt.h>
+#include <libgen.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <libgen.h>
 
-#include "log.h"
-#include "commands.h"
 #include "can_client.h"
+#include "commands.h"
+#include "log.h"
 
 #define VERSION_MAJ 0
 #define VERSION_MIN 1
@@ -74,7 +74,8 @@ int main(int argc, char** argv) {
     int rc;
     prg = basename(argv[0]);
 
-    argv++; argc--;
+    argv++;
+    argc--;
 
     handle_args(&argc, &argv);
 

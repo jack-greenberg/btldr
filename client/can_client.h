@@ -1,24 +1,22 @@
 #pragma once
-#include <stdint.h>
-
-#include <net/if.h>
-#include <sys/socket.h>
-
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <net/if.h>
+#include <stdint.h>
+#include <sys/socket.h>
 
 struct CanClient {
-    int s; // Socket
+    int s;  // Socket
     int mtu;
-	struct sockaddr_can addr;
-	struct can_frame frame;
-	struct ifreq ifr;
+    struct sockaddr_can addr;
+    struct can_frame frame;
+    struct ifreq ifr;
 };
 
 /*
  * Initializes the CAN client and sockets
  */
-int init_can_client(uint16_t can_filter_id, uint16_t can_filter_mask);
+int init_can_client(void);
 
 /*
  * Closes socket
@@ -35,4 +33,5 @@ int can_send(uint16_t id, uint8_t* data, uint8_t dlc);
  * Set timeout negative to be infinite
  * Set timeout to zero to instantly return
  */
-int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout);
+int can_receive(uint16_t filter_id, uint16_t filter_mask, uint16_t* can_id,
+                uint8_t* can_dlc, uint8_t* data, int timeout);

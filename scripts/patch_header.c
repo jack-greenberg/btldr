@@ -15,7 +15,8 @@ const size_t image_hdr_size = sizeof(image_hdr_t);
 
 int patch_verify_image_magic(FILE* fp, image_hdr_t* image_hdr) {
     if (image_hdr->image_magic != IMAGE_MAGIC) {
-        fprintf(stderr, "Incorrect image magic: 0x%X\n", image_hdr->image_magic);
+        fprintf(stderr, "Incorrect image magic: 0x%X\n",
+                image_hdr->image_magic);
         fclose(fp);
         return 1;
     }
@@ -40,7 +41,8 @@ int patch_write_image_size(FILE* fp, image_hdr_t* image_hdr) {
     return 0;
 }
 
-int patch_calc_write_crc(FILE* fp, image_hdr_t* image_hdr, uint16_t image_size) {
+int patch_calc_write_crc(FILE* fp, image_hdr_t* image_hdr,
+                         uint16_t image_size) {
     // Seek to the beginning of the image
     fseek(fp, image_hdr_size, SEEK_SET);
 

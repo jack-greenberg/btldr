@@ -3,27 +3,26 @@
  * Copyright 2021
  */
 #include "can_client.h"
+
+#include <linux/can.h>
+#include <linux/can/raw.h>
+#include <net/if.h>
+#include <poll.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
-
-#include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <poll.h>
-
-#include <linux/can.h>
-#include <linux/can/raw.h>
+#include <unistd.h>
 
 #include "log.h"
 
 static struct CanClient client;
 extern char* device;
 
-int init_can_client(uint16_t can_filter_id, uint16_t can_filter_mask) {
+int init_can_client(void) {
     // Open a socket to write to
     if ((client.s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
         log_error("Couldn't open socket");
@@ -32,20 +31,15 @@ int init_can_client(uint16_t can_filter_id, uint16_t can_filter_mask) {
     log_info("Socket opened successfully");
     client.addr.can_family = AF_CAN;
 
-    struct can_filter rfilter[1];
-    rfilter[0].can_id = can_filter_id;
-    rfilter[0].can_mask = can_filter_mask;
-    setsockopt(client.s, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
-
     // Set up the device and connect the socket to it
-	strncpy(client.ifr.ifr_name, device, IFNAMSIZ - 1);
-	client.ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-	if (ioctl(client.s, SIOCGIFINDEX, &client.ifr) < 0) {
-		log_error("Failed to find device %s", client.ifr.ifr_name);
-		return 1;
-	}
+    strncpy(client.ifr.ifr_name, device, IFNAMSIZ - 1);
+    client.ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+    if (ioctl(client.s, SIOCGIFINDEX, &client.ifr) < 0) {
+        log_error("Failed to find device %s", client.ifr.ifr_name);
+        return 1;
+    }
     log_info("Found device %s", client.ifr.ifr_name);
-	client.addr.can_ifindex = client.ifr.ifr_ifindex;
+    client.addr.can_ifindex = client.ifr.ifr_ifindex;
 
     // Set up max transmission unit (mtu)
     if (ioctl(client.s, SIOCGIFMTU, &client.ifr) < 0) {
@@ -53,10 +47,11 @@ int init_can_client(uint16_t can_filter_id, uint16_t can_filter_mask) {
         return 1;
     }
 
-    if (bind(client.s, (struct sockaddr *)&client.addr, sizeof(client.addr)) < 0) {
+    if (bind(client.s, (struct sockaddr*)&client.addr, sizeof(client.addr))
+        < 0) {
         log_error("Failed to bind to socket");
-		return 1;
-	}
+        return 1;
+    }
     log_info("Successfully binded to socket");
 
     return 0;
@@ -76,7 +71,8 @@ int can_send(uint16_t id, uint8_t* data, uint8_t dlc) {
     int nbytes = write(client.s, &client.frame, sizeof(struct can_frame));
 
     if (nbytes < 0) {
-        log_error("Failed to send CAN message with DLC %i and ID 0x%X", dlc, id);
+        log_error("Failed to send CAN message with DLC %i and ID 0x%X", dlc,
+                  id);
         return 1;
     }
 
@@ -89,11 +85,18 @@ int can_send(uint16_t id, uint8_t* data, uint8_t dlc) {
     return 0;
 }
 
-int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout) {
+int can_receive(uint16_t filter_id, uint16_t filter_mask, uint16_t* can_id,
+                uint8_t* can_dlc, uint8_t* data, int timeout) {
     struct pollfd fds = {
         .fd = client.s,
         .events = POLLIN,
     };
+
+    struct can_filter rfilter[1];
+    rfilter[0].can_id = filter_id;
+    rfilter[0].can_mask = filter_mask;
+    setsockopt(client.s, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter,
+               sizeof(rfilter));
 
     log_trace("Polling receive...");
 
@@ -113,7 +116,8 @@ int can_receive(uint8_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout) {
         return 1;
     }
 
-    log_trace("Received CAN message: id=0x%X, dlc=%i", client.frame.can_id, client.frame.can_dlc);
+    log_trace("Received CAN message: id=0x%X, dlc=%i", client.frame.can_id,
+              client.frame.can_dlc);
 
     *can_id = client.frame.can_id;
     *can_dlc = client.frame.can_dlc;

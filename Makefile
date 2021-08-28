@@ -1,5 +1,5 @@
 # Author: Jack Greenberg <j@jackgreenberg.co>
-PROJECT = btldr-example
+PROJECT = btldr
 MCU = atmega16m1
 F_CPU = 4000000
 PROGRAMMER = usbasp
@@ -8,7 +8,7 @@ BOOTSTART = 0x3000
 # Structure
 TARGET = btldr
 APP = main
-CLIENT = btldr
+CLIENT = updatr
 
 BUILD_DIR = build
 
@@ -168,7 +168,7 @@ clean:
 
 .PHONY: lint
 lint:
-	clang-format -i --style=file lib/* src/* scripts/* client/*.c
+	clang-format -i --style=file lib/* src/* scripts/* client/*.c client/*.h
 
 docs/state.png: docs/state.puml
 	plantuml $<
