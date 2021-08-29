@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "can_isp.h"
 #include "can_lib.h"
@@ -87,13 +88,13 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
     session.is_active = true;
     session.type = data[0];
 
-    if (sesssion.type == REQUEST_UPLOAD) {
+    if (session.type == REQUEST_UPLOAD) {
         session.current_addr.word = 0;
         session.remaining_size.bytes[0] = data[1];
         session.remaining_size.bytes[1] = data[2];
-    } else if (sesssion.type == REQUEST_DOWNLOAD) {
+    } else if (session.type == REQUEST_DOWNLOAD) {
         session.current_addr.word = 0;
-        session.remaining_size.word = 0;  // TODO get image size from header
+        session.remaining_size.word = get_image_size();
     } else {
         uint8_t err_data[1] = {ERR_INVALID_COMMAND};
 

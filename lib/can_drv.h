@@ -59,12 +59,14 @@ uint8_t can_get_free_mob(void);
 /*
  * Retrieves data from CANPAGE
  */
-void can_get_data(uint8_t *msg, uint8_t dlc);
+void can_get_data(uint8_t* msg, uint8_t dlc);
+
+void can_send_data(uint8_t* msg, uint8_t dlc);
 
 /*
  * Gets the status of the MOb
  *
- * returns: TODO
+ * returns:
  *   MOB_NOT_COMPLETE - Data still in motion
  *   MOB_RX_OK        - Message received
  *   MOB_TX_OK        - Message sent

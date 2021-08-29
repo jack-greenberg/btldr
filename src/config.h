@@ -5,9 +5,7 @@
  * JSON file, but for now we will set a default here.
  *
  * Default node ID will be 0xFF.
- *
- * TODO: Develop a standard for ECU management
  */
-#ifndef NODE_ID
-#define NODE_ID (0xFF)
+#ifndef ECU_ID
+#define ECU_ID (0xFF)
 #endif

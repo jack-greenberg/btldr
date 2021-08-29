@@ -36,8 +36,12 @@ uint8_t can_get_free_mob(void) {
     return NO_MOB;
 }
 
-void can_get_data(uint8_t *msg, uint8_t dlc) {
+void can_get_data(uint8_t* msg, uint8_t dlc) {
     for (uint8_t i = 0; i < dlc; i++) { *(msg + i) = CANMSG; }
+}
+
+void can_send_data(uint8_t* msg, uint8_t dlc) {
+    for (uint8_t i = 0; i < dlc; i++) { CANMSG = *(msg + i); }
 }
 
 uint8_t can_get_mob_status(uint8_t mob) {

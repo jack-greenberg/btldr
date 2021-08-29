@@ -103,9 +103,8 @@ all: $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT)
 $(BUILD_DIR)/%.eep: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $(EEPFLAGS) -O ihex $< $@
 
-$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf #patch_header
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 	$(OBJCOPY) $< $@ -R .eeprom -O ihex
-	# TODO: Patch header
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf patch_header
 	$(OBJCOPY) -O binary -R .eeprom $< $@
@@ -138,7 +137,7 @@ flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(PROJEC
 %.size: %
 	nm --size-sort --print-size -td $< | sort >> $@
 	echo "" >> $@
-	stat $< --printf "%s bytes\n" > $@ # TODO: We should stat the bin file
+	stat $< --printf "%s bytes\n" > $@
 
 .PHONY: clean
 clean:

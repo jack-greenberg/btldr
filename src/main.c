@@ -15,7 +15,6 @@
 
 #define LED0 (PD6)
 #define BLINK_DELAY (250)  // ms
-#define ECU_ID (0x10)
 #define ISP_MOB_NUM (0x5)
 
 image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {

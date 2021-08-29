@@ -24,11 +24,8 @@ uint8_t can_isp_task(void) {
     // message objects
     (void)can_receive(&msg);
 
-    // Waits 10ms for a message
-    // TODO: Is this long enough?
-    while (can_poll_complete(&msg) == CAN_ST_NOT_READY) {
-        // _delay_ms(1U);
-    }
+    while (can_poll_complete(&msg) == CAN_ST_NOT_READY)
+        ;
 
     switch (msg.id) {
         case CAN_ID_QUERY: {

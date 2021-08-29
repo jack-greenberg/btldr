@@ -49,8 +49,5 @@ int main(void) {
 
     // Updater
     can_init();
-    while (1) {
-        // TODO: Log errors here?
-        (void)can_isp_task();
-    }
+    while (1) { (void)can_isp_task(); }
 }

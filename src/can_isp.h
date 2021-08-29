@@ -129,9 +129,6 @@ uint8_t can_isp_task(void);
 /**
  * Handles query request. Checks to see if node id matches, and if so, returns a
  * message with the bootloader version and flash timestamp
- *
- * TODO:
- *   Flash timestamp is 8 bytes, so need 2 CAN messages?
  */
 uint8_t handle_query(uint8_t* data, uint8_t length);
 

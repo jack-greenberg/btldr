@@ -41,3 +41,8 @@ uint64_t get_image_timestamp(void) {
     const image_hdr_t *img = image_get_header();
     return (uint64_t)img->flash_timestamp;
 }
+
+uint16_t get_image_size(void) {
+    const image_hdr_t *img = image_get_header();
+    return (uint16_t)img->image_size;
+}
