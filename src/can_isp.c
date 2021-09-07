@@ -55,7 +55,7 @@ uint8_t can_isp_task(void) {
             Can_msg_t msg = {
                 .mob = CAN_AUTO_MOB,
                 .mask = CAN_NO_FILTERING,
-                .id = CAN_ID_ERROR,
+                .id = CAN_ID_STATUS,
                 .data = data,
                 .length = 4,
             };

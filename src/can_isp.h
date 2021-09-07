@@ -53,35 +53,26 @@
  *
  * [0]    => bootloader version (MMMM.mmmm bits)
  * [1]    => chip ID
- * [2..3] => reserved
+ * [2]    => current image (0x0 for app, 0x1 for updater)
+ * [3]    => reserved
  * [4..7] => Time delta from query unix timestamp and flash timestamp
  */
 #define CAN_ID_QUERY_RESPONSE (0x001U)
+#define CURRENT_IMAGE_APP (0x00)
+#define CURRENT_IMAGE_UPDATER (0x01)
 
 /*
  * client -> target
  *
- * DLC = 1-8
- * [0]      => Error code (below)
- * [1..dlc] => Error details
+ * DLC = 5
+ * [0]    => Err code
+ * [1..2] => Last programmed address
+ * [3..4] => Remaining data
  */
-#define CAN_ID_ERROR (0x003U)
-
-// Error codes
-#define ERR_INVALID_COMMAND (0x000U)  // Command unknown
-// #define ERR_NO_SESSION (0x001U) // Data sent but session isn't active
-// #define ERR_TIMEOUT (0x002U) //
-// #define ERR_SESSION_EXISTS (0x003U) // Session command repeated
-#define ERR_IMAGE_INVALID (0x001U)
-
-/*
- * client -> target
- *
- * DLC = 4
- * [0..1] => Last programmed address
- * [2..3] => Remaining data
- */
-#define CAN_ID_STATUS (0x005U)  // Sends status messages during update
+#define CAN_ID_STATUS (0x003U)  // Sends status messages during update
+#define STATUS_NO_ERROR (0x00)
+#define ERR_INVALID_COMMAND (0x01)
+#define ERR_IMAGE_INVALID (0x02)
 
 /*
  * Other defines

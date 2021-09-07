@@ -39,7 +39,7 @@ uint8_t handle_query(uint8_t* data, uint8_t length) {
     uint64_t delta = timestamp - flash_timestamp;
     uint32_t delta_32 = (uint32_t)delta & 0xFFFF;
 
-    uint8_t response_data[8] = {version, chip, 0};
+    uint8_t response_data[8] = {version, chip, CURRENT_IMAGE_UPDATER, 0};
 
     memcpy((response_data + 4), &delta_32, sizeof(delta_32));
 
@@ -70,7 +70,7 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
         Can_msg_t response = {
             .mob = CAN_AUTO_MOB,
             .mask = CAN_NO_FILTERING,
-            .id = CAN_ID_ERROR,
+            .id = CAN_ID_STATUS,
             .data = err_data,
             .length = 2,
         };
@@ -101,7 +101,7 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
         Can_msg_t msg = {
             .mob = CAN_AUTO_MOB,
             .mask = CAN_NO_FILTERING,
-            .id = CAN_ID_ERROR,
+            .id = CAN_ID_STATUS,
             .data = err_data,
             .length = 1,
         };
@@ -118,7 +118,8 @@ uint8_t handle_data(uint8_t* data, uint8_t length) {
     session.remaining_size.word -= length;
 
     // Status update
-    uint8_t status_data[4] = {
+    uint8_t status_data[5] = {
+        STATUS_NO_ERROR,
         session.current_addr.bytes[0],
         session.current_addr.bytes[1],
         session.remaining_size.bytes[0],

@@ -39,7 +39,7 @@ static void do_query(uint8_t* data, uint8_t dlc) {
     uint64_t delta = timestamp - flash_timestamp;
     uint32_t delta_32 = (uint32_t)delta & 0xFFFF;
 
-    uint8_t resp_data[8] = {version, chip, 0};
+    uint8_t resp_data[8] = {version, chip, CURRENT_IMAGE_APP, 0};
 
     memcpy((resp_data + 4), &delta_32, sizeof(delta_32));
 

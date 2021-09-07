@@ -85,8 +85,6 @@ int main(int argc, char** argv) {
         log_info("Running in verbose mode");
     }
 
-    // log_info("Device found: %s", device);
-
     if (argc == 0) {
         printf("No command specified\n");
         print_usage(prg, stderr);
@@ -94,6 +92,7 @@ int main(int argc, char** argv) {
     }
 
     char* cmd = argv[0];
+    struct CanClient client;
 
     if (!strcmp(cmd, "flash")) {
         if (argc != 3) {
@@ -104,7 +103,13 @@ int main(int argc, char** argv) {
 
         uint8_t ecu_id = strtoul(argv[1], NULL, 16);
         char* binary_path = argv[2];
-        rc = cmd_flash(ecu_id, binary_path);
+
+        rc = init_can_client(&client);
+        if (rc != 0) {
+            goto bail;
+        }
+
+        rc = cmd_flash(&client, ecu_id, binary_path);
     } else if (!strcmp(cmd, "ping")) {
         if (argc != 2) {
             fprintf(stderr, "Wrong number of args specified\n");
@@ -119,14 +124,20 @@ int main(int argc, char** argv) {
             ecu_id = strtoul(argv[1], NULL, 16);
         }
 
-        rc = cmd_ping(ecu_id);
+        rc = init_can_client(&client);
+        if (rc != 0) {
+            goto bail;
+        }
+
+        uint8_t current_image;
+        rc = cmd_ping(&client, ecu_id, &current_image);
     } else {
         printf("Unknown command: %s\n", cmd);
         print_usage(prg, stderr);
         rc = 1;
     }
 
-    can_client_destroy();
-
+bail:
+    can_client_destroy(&client);
     return rc;
 }
