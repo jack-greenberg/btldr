@@ -91,9 +91,6 @@ int can_receive(struct CanClient* client, struct can_filter *filter,
         .events = POLLIN,
     };
 
-    // struct can_filter rfilter[1];
-    // rfilter[0].can_id = filter_id;
-    // rfilter[0].can_mask = filter_mask;
     setsockopt(client->s, SOL_CAN_RAW, CAN_RAW_FILTER, filter,
                sizeof(filter));
 

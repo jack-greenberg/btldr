@@ -54,8 +54,8 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
     }
     if (current_image != CURRENT_IMAGE_UPDATER) {
         log_error("Device was not able to be placed in updater");
-        goto bail;
         rc = 1;
+        goto bail;
     }
 
     // Device in updater mode, starting session
@@ -64,6 +64,7 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
     fp = fopen(binary_path, "rb");
     if (fp == NULL) {
         printf("File not found: %s\n", binary_path);
+        rc = 2;
         goto bail;
     }
 
