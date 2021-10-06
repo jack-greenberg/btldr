@@ -6,6 +6,7 @@
 #include "can_lib.h"
 #include "image.h"
 #include "shared_mem.h"
+#include "debug.h"
 
 static Can_msg_t can_msg;
 static uint16_t fixed_ecu_id;

@@ -9,6 +9,7 @@
 #include "flash.h"
 #include "image.h"
 #include "shared_mem.h"
+#include "debug.h"
 
 static struct session_data session = {
     .is_active = false,
@@ -65,6 +66,8 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
         // Back to bootloader
         asm("jmp 0x3000");  // TODO How to get bootstart address?
     } else {
+        bootflag_clear(IMAGE_IS_VALID);
+
         // Transmit error with invalid image and reason for invalid
         uint8_t err_data[2] = {ERR_IMAGE_INVALID, valid};
         Can_msg_t response = {

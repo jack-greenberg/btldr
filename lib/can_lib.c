@@ -50,7 +50,7 @@ CAN_status can_poll_complete(Can_msg_t *msg) {
 
     if (mob_st == MOB_ST_NOT_COMPLETE) {
         return CAN_ST_NOT_READY;
-    } else if (mob_st == MOB_ST_RX_OK || mob_st == MOB_ST_RX_OK_DLCW) {
+    } else if ((mob_st == MOB_ST_RX_OK) || (mob_st == MOB_ST_RX_OK_DLCW)) {
         can_set_mob(msg->mob);
         can_get_data(msg->data, msg->length);
         can_clear_mob_status();

@@ -15,7 +15,7 @@ uint8_t can_isp_task(void) {
     uint8_t data[CAN_MAX_MSG_LENGTH];
     Can_msg_t msg = {
         .data = data,
-        .mask = CAN_ISP_MASK,
+        .mask = 0x00,
         .id = 0x00,
         .length = CAN_MAX_MSG_LENGTH,
     };
@@ -24,7 +24,7 @@ uint8_t can_isp_task(void) {
     // message objects
     (void)can_receive(&msg);
 
-    while (can_poll_complete(&msg) == CAN_ST_NOT_READY)
+    while ((st = can_poll_complete(&msg)) == CAN_ST_NOT_READY)
         ;
 
     switch (msg.id) {
@@ -63,6 +63,8 @@ uint8_t can_isp_task(void) {
             break;
         }
     }
+
+    log_uart("End of loop");
 
     return st;
 }

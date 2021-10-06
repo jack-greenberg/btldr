@@ -7,5 +7,5 @@
  * Default node ID will be 0xFF.
  */
 #ifndef ECU_ID
-#define ECU_ID (0xFF)
+#define ECU_ID (0x00)
 #endif
