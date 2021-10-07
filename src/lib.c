@@ -6,7 +6,7 @@
 #include "can_lib.h"
 #include "debug.h"
 #include "image.h"
-#include "shared_mem.h"
+#include "shmem.h"
 
 static can_frame_t can_msg;
 static uint16_t fixed_ecu_id;
@@ -34,12 +34,12 @@ static void do_reset(uint8_t* data, uint8_t dlc) {
 
 static void do_query(uint8_t* data, uint8_t dlc) {
     // Return bootloader version from EEPROM
-    uint8_t version = updater_get_version();
+    uint8_t version = shmem_get_version();
     uint8_t chip = CHIP_AVR_ATMEGA16M1;
 
     // Current timestamp from data
     uint64_t timestamp = (uint64_t)*data;
-    uint64_t flash_timestamp = get_image_timestamp();
+    uint64_t flash_timestamp = image_get_timestamp();
     uint64_t delta = timestamp - flash_timestamp;
     uint32_t delta_32 = (uint32_t)delta & 0xFFFF;
 

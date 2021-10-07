@@ -17,7 +17,7 @@ SRCS_APP = \
 		   src/lib.c \
 		   lib/can_lib.c \
 		   lib/image.c \
-		   lib/shared_mem.c \
+		   lib/shmem.c \
 		   src/can_isp_commands.c \
 		   lib/flash.c \
 		   src/can_isp.c
@@ -28,7 +28,7 @@ SRCS_BOOT = \
 			src/can_isp_commands.c
 
 SRCS_SHMEM = \
-			 lib/shared_mem.c
+			 lib/shmem.c
 
 SRCS_CLIENT = \
 			  client/main.c \

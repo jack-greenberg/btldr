@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "flash.h"
 #include "image.h"
-#include "shared_mem.h"
+#include "shmem.h"
 
 static struct session_data session = {
     .is_active = false,
@@ -23,13 +23,13 @@ static struct session_data session = {
  ***************************************************/
 
 uint8_t handle_query(uint8_t* data, uint8_t length) {
-    uint8_t version = updater_get_version();
+    uint8_t version = shmem_get_version();
 
     // TODO: Use getter function?
     uint8_t chip = CHIP_AVR_ATMEGA16M1;
 
     uint64_t timestamp = (uint64_t)*data;
-    uint64_t flash_timestamp = get_image_timestamp();
+    uint64_t flash_timestamp = image_get_timestamp();
     uint64_t delta = timestamp - flash_timestamp;
     uint32_t delta_32 = (uint32_t)delta & 0xFFFF;
 
@@ -91,7 +91,7 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
         session.remaining_size.bytes[1] = data[2];
     } else if (session.type == REQUEST_DOWNLOAD) {
         session.current_addr.word = 0;
-        session.remaining_size.word = get_image_size();
+        session.remaining_size.word = image_get_size();
     } else {
         uint8_t err_data[1] = {ERR_INVALID_COMMAND};
 

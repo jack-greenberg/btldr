@@ -14,7 +14,7 @@
 #include "can_lib.h"
 #include "debug.h"
 #include "image.h"
-#include "shared_mem.h"
+#include "shmem.h"
 
 /*
  * MCUSR := MCU Status Register
