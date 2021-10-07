@@ -1,67 +1,92 @@
+/*
+ * Copyright 2021 Olin Electric Motorsports
+ */
 #include "can_lib.h"
 
 #include <avr/io.h>
-#include <stdint.h>
 
-#include "can_drv.h"
+#include "mob.h"
 
-extern void can_init();
+void can_init(baud_rate_t baud) {
+    can_reset();
 
-CAN_status can_receive(Can_msg_t *msg) {
-    msg->mob = can_get_free_mob();
+    // Baud rate settings taken from data sheet table 20-2 based on 4MHz fclk_io
+    switch (baud) {
+        case BAUD_250KBPS: {
+            CANBT1 = 0x00;
+            CANBT2 = 0x0C;
+            CANBT3 = 0x36;
+        } break;
+        case BAUD_500KBPS:
+        default: {
+            CANBT1 = 0x00;
+            CANBT2 = 0x04;
+            CANBT3 = 0x12;
+        } break;
+    };
 
-    if (msg->mob == NO_MOB) {
-        return CAN_ST_ERROR;
+    // Clear all message objects
+    for (uint8_t mob = 0; mob < CAN_NUM_MOB; mob++) {
+        select_mob(mob);
+        mob_reset();
     }
 
-    can_set_mob(msg->mob);
-    can_set_mob_id(msg->id);
-    can_set_mob_mask(msg->mask);
-    can_set_dlc(msg->length);
-
-    can_cfg_rx();
-
-    return CAN_ST_OK;
+    can_enable();
 }
 
-CAN_status can_transmit(Can_msg_t *msg) {
-    if (msg->mob == CAN_AUTO_MOB) {
-        msg->mob = can_get_free_mob();
-    }
+void can_enable_interrupt(uint8_t mob) {
+    // General RX interrupt enable
+    CANGIE |= _BV(ENRX);
 
-    if (msg->mob == NO_MOB) {
-        return CAN_ST_ERROR;
-    }
-
-    can_set_mob(msg->mob);
-    can_set_mob_id(msg->id);
-    can_set_mob_mask(msg->mask);
-    can_set_dlc(msg->length);
-
-    can_send_data(msg->data, msg->length);
-
-    can_cfg_tx();
-
-    return CAN_ST_OK;
+    // Enable interrupt for the message object
+    mob_enable_interrupt(mob);
 }
 
-CAN_status can_poll_complete(Can_msg_t *msg) {
-    uint8_t mob_st = can_get_mob_status(msg->mob);
+int can_send(can_frame_t* frame) {
+    select_mob(frame->mob);
+    mob_reset();
 
-    if (mob_st == MOB_ST_NOT_COMPLETE) {
-        return CAN_ST_NOT_READY;
-    } else if ((mob_st == MOB_ST_RX_OK) || (mob_st == MOB_ST_RX_OK_DLCW)) {
-        can_set_mob(msg->mob);
-        can_get_data(msg->data, msg->length);
-        can_clear_mob_status();
-        return CAN_ST_OK;
-    } else if (mob_st == MOB_ST_TX_OK) {
-        can_set_mob(msg->mob);
-        can_clear_mob_status();
-        return CAN_ST_OK;
+    mob_configure(frame->id, 0, frame->dlc);
+
+    // Set the message
+    for (uint8_t i = 0; i < frame->dlc; i++) { mob_write_data(frame->data[i]); }
+
+    mob_enable_tx();
+
+    return 0;
+}
+
+int can_receive(can_frame_t* frame, can_filter_t filter) {
+    select_mob(frame->mob);
+    mob_reset();
+
+    mob_configure(filter.id, filter.mask, MAX_DLC);
+
+    mob_enable_rx();
+    return 0;
+}
+
+int can_poll_receive(can_frame_t* frame) {
+    select_mob(frame->mob);
+
+    uint8_t canstmob = CANSTMOB;
+    uint8_t cancdmob = CANCDMOB;
+
+    if (canstmob & (1 << RXOK)) {
+        uint8_t dlc = 0xF & cancdmob;
+
+        for (uint8_t i = 0; i < dlc; i++) { frame->data[i] = CANMSG; }
+
+        frame->id = (CANIDT1 << 3) | (CANIDT2 >> 5);
+        frame->dlc = dlc;
+
+        return 0;
+    } else if (canstmob
+               & ((1 << BERR) | (1 << SERR) | (1 << CERR) | (1 << FERR))) {
+        // TODO: Do we want more fine grain error handling?
+        return 1;
     } else {
-        can_set_mob(msg->mob);
-        can_clear_mob_status();
-        return CAN_ST_ERROR;
+        // Not ready
+        return -1;
     }
 }

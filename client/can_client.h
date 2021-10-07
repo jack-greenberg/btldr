@@ -33,6 +33,5 @@ int can_send(struct CanClient* client, uint16_t id, uint8_t* data, uint8_t dlc);
  * Set timeout negative to be infinite
  * Set timeout to zero to instantly return
  */
-int can_receive(struct CanClient* client, struct can_filter *filter,
-                uint16_t* can_id, uint8_t* can_dlc,
-                uint8_t* data, int timeout);
+int can_receive(struct CanClient* client, struct can_filter* filter,
+                uint16_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout);

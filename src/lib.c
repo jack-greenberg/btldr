@@ -4,21 +4,24 @@
 
 #include "can_isp.h"
 #include "can_lib.h"
+#include "debug.h"
 #include "image.h"
 #include "shared_mem.h"
-#include "debug.h"
 
-static Can_msg_t can_msg;
+static can_frame_t can_msg;
 static uint16_t fixed_ecu_id;
 
 void updater_init(uint16_t ecu_id, uint8_t mob) {
     fixed_ecu_id = ecu_id;
 
-    can_msg.id = (fixed_ecu_id << 4);
-    can_msg.mask = 0x7f0;  // Filter in requests to this ECU
     can_msg.mob = mob;
 
-    can_receive(&can_msg);
+    can_filter_t filter = {
+        .id = fixed_ecu_id << 4,
+        .mask = 0x7f0,
+    };
+
+    can_receive(&can_msg, filter);
 }
 
 static void do_reset(uint8_t* data, uint8_t dlc) {
@@ -46,31 +49,36 @@ static void do_query(uint8_t* data, uint8_t dlc) {
 
     can_msg.id = CAN_ID_QUERY_RESPONSE;
     can_msg.data = resp_data;
-    can_msg.length = 8;
+    can_msg.dlc = 8;
 
-    (void)can_transmit(&can_msg);
+    (void)can_send(&can_msg);
 }
 
 void updater_loop(void) {
-    CAN_status st = can_poll_complete(&can_msg);
+    int rc = can_poll_receive(&can_msg);
 
-    if ((st == CAN_ST_NOT_READY) || (st == CAN_ST_ERROR)) {
+    if ((rc == -1) || (rc == 1)) {
+        // Not ready or error
         return;
     }
 
+    // What CAN ID was received
     switch (can_msg.id) {
         case CAN_ID_QUERY: {
-            do_query(can_msg.data, can_msg.length);
+            do_query(can_msg.data, can_msg.dlc);
         } break;
         case CAN_ID_RESET: {
-            do_reset(can_msg.data, can_msg.length);
+            do_reset(can_msg.data, can_msg.dlc);
         } break;
         default: {
-            // Ignore all other messages
+            // Ignore all other messages in application
         } break;
     }
 
-    can_msg.id = (fixed_ecu_id << 4);
-    can_msg.mask = 0x7f0;  // Filter in requests to this ECU
-    can_receive(&can_msg);
+    can_filter_t filter = {
+        .id = fixed_ecu_id << 4,
+        .mask = 0x7f0,
+    };
+
+    can_receive(&can_msg, filter);
 }

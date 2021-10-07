@@ -6,10 +6,10 @@
 
 #include "can_isp.h"
 #include "can_lib.h"
+#include "debug.h"
 #include "flash.h"
 #include "image.h"
 #include "shared_mem.h"
-#include "debug.h"
 
 static struct session_data session = {
     .is_active = false,
@@ -23,13 +23,6 @@ static struct session_data session = {
  ***************************************************/
 
 uint8_t handle_query(uint8_t* data, uint8_t length) {
-    uint8_t st = 0;
-
-    Can_msg_t response = {
-        .id = CAN_ID_QUERY_RESPONSE,
-        .mob = CAN_AUTO_MOB,
-    };
-
     uint8_t version = updater_get_version();
 
     // TODO: Use getter function?
@@ -44,12 +37,14 @@ uint8_t handle_query(uint8_t* data, uint8_t length) {
 
     memcpy((response_data + 4), &delta_32, sizeof(delta_32));
 
-    response.data = response_data;
-    response.length = 2;
+    can_frame_t response = {
+        .id = CAN_ID_QUERY_RESPONSE,
+        .mob = 0,
+        .data = response_data,
+        .dlc = 8,
+    };
 
-    st = can_transmit(&response);
-
-    return st;
+    return can_send(&response);
 }
 
 uint8_t handle_reset(uint8_t* data, uint8_t length) {
@@ -70,15 +65,14 @@ uint8_t handle_reset(uint8_t* data, uint8_t length) {
 
         // Transmit error with invalid image and reason for invalid
         uint8_t err_data[2] = {ERR_IMAGE_INVALID, valid};
-        Can_msg_t response = {
-            .mob = CAN_AUTO_MOB,
-            .mask = CAN_NO_FILTERING,
+        can_frame_t response = {
+            .mob = 0,
             .id = CAN_ID_STATUS,
             .data = err_data,
-            .length = 2,
+            .dlc = 2,
         };
 
-        st = can_transmit(&response);
+        st = can_send(&response);
     }
 
     // Unreachable if image is valid
@@ -101,14 +95,13 @@ uint8_t handle_request(uint8_t* data, uint8_t length) {
     } else {
         uint8_t err_data[1] = {ERR_INVALID_COMMAND};
 
-        Can_msg_t msg = {
-            .mob = CAN_AUTO_MOB,
-            .mask = CAN_NO_FILTERING,
+        can_frame_t msg = {
+            .mob = 0,
             .id = CAN_ID_STATUS,
             .data = err_data,
-            .length = 1,
+            .dlc = 1,
         };
-        st = can_transmit(&msg);
+        st = can_send(&msg);
     }
 
     return st;
@@ -129,13 +122,12 @@ uint8_t handle_data(uint8_t* data, uint8_t length) {
         session.remaining_size.bytes[1],
     };
 
-    Can_msg_t msg = {
-        .mob = CAN_AUTO_MOB,
-        .mask = CAN_NO_FILTERING,
+    can_frame_t msg = {
+        .mob = 0,
         .id = CAN_ID_STATUS,
         .data = status_data,
-        .length = 4,
+        .dlc = 4,
     };
 
-    return can_transmit(&msg);
+    return can_send(&msg);
 }

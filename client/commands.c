@@ -79,7 +79,7 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
     can_send(client, can_msg_id, can_data, 3);
 
     // Wait for session response
-    struct can_filter rfilter[1] = { 0 };
+    struct can_filter rfilter[1] = {0};
     rfilter[0].can_id = (ecu_id << 4) | CAN_ID_STATUS;
     rfilter[0].can_mask = 0x7FF;
 
@@ -109,7 +109,7 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
         can_send(client, can_msg_id, can_data, nbytes);
 
         rc = can_receive(client, rfilter, &can_msg_id, &can_dlc, can_data,
-                         1000); // Timeout 1000ms
+                         1000);  // Timeout 1000ms
 
         if (rc == 1) {
             log_error("Fatal error in receiving CAN message");
@@ -130,14 +130,15 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
         // All is good
         // update status in log
         uint16_t remaining_data;
-        memcpy(&remaining_data, can_data+3, sizeof(uint16_t));
+        memcpy(&remaining_data, can_data + 3, sizeof(uint16_t));
 
         uint16_t file_remaining_data = ftell(fp);
 
         if (file_remaining_data != remaining_data) {
             log_warn("Mismatch in amount of data remaining, flash may fail");
         } else {
-            double percent_complete = (image_size - remaining_data) / image_size;
+            double percent_complete
+                = (image_size - remaining_data) / image_size;
             printf("%.2f%% complete", percent_complete);
         }
     }
@@ -149,11 +150,11 @@ bail:
 }
 
 int cmd_ping(struct CanClient* client, uint8_t ecu_id, uint8_t* current_image) {
-    struct can_filter rfilter[1] = { 0 };
+    struct can_filter rfilter[1] = {0};
 
     if (ecu_id == PING_BROADCAST) {
         rfilter[0].can_id = CAN_ID_QUERY_RESPONSE;
-        rfilter[0].can_mask = 0x00F; // 0bxxxxxxx0001 to match ping responses
+        rfilter[0].can_mask = 0x00F;  // 0bxxxxxxx0001 to match ping responses
     } else {
         rfilter[0].can_id = (ecu_id << 4) | CAN_ID_QUERY_RESPONSE;
         rfilter[0].can_mask = 0x7FF;
@@ -180,8 +181,8 @@ int cmd_ping(struct CanClient* client, uint8_t ecu_id, uint8_t* current_image) {
             goto bail;
         }
 
-        rc = can_receive(client, rfilter, &recv_can_id,
-                         &recv_can_dlc, (uint8_t*)recv_can_data, POLLTIMEOUT);
+        rc = can_receive(client, rfilter, &recv_can_id, &recv_can_dlc,
+                         (uint8_t*)recv_can_data, POLLTIMEOUT);
         num_tries++;
     } while ((rc == -1) && (num_tries < MAX_RETRIES));
 
@@ -204,7 +205,7 @@ int cmd_ping(struct CanClient* client, uint8_t ecu_id, uint8_t* current_image) {
     char* image_name = (current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
 
     uint32_t time_delta;
-    memcpy(&time_delta, recv_can_data+4, sizeof(uint32_t));
+    memcpy(&time_delta, recv_can_data + 4, sizeof(uint32_t));
 
     const time_t timer = current_time - time_delta;
     struct tm flash_time;
@@ -214,7 +215,7 @@ int cmd_ping(struct CanClient* client, uint8_t ecu_id, uint8_t* current_image) {
     (void)strftime(flash_time_str, 64, "%x %H:%M", &flash_time);
 
     printf("8 bytes from 0x%X: chip=%s version=%i.%i image=%s flashed=%s\n",
-            ecu_id, chip, version_maj, version_min, image_name, flash_time_str);
+           ecu_id, chip, version_maj, version_min, image_name, flash_time_str);
 
 bail:
     return rc;

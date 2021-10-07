@@ -48,6 +48,6 @@ int main(void) {
     }
 
     // Updater
-    can_init();
+    can_init(BAUD_500KBPS);
     while (1) { (void)can_isp_task(); }
 }

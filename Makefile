@@ -17,7 +17,6 @@ SRCS_APP = \
 		   src/lib.c \
 		   lib/can_lib.c \
 		   lib/image.c \
-		   lib/can_drv.c \
 		   lib/shared_mem.c \
 		   src/can_isp_commands.c \
 		   lib/flash.c \
@@ -39,7 +38,6 @@ SRCS_CLIENT = \
 
 SRCS_SHARED = \
 			  lib/image.c \
-			  lib/can_drv.c \
 			  lib/can_lib.c \
 			  lib/flash.c \
 			  lib/debug.c \
