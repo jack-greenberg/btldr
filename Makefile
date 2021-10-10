@@ -18,14 +18,14 @@ SRCS_APP = \
 		   lib/can_lib.c \
 		   lib/image.c \
 		   lib/shmem.c \
-		   src/can_isp_commands.c \
+		   src/commands.c \
 		   lib/flash.c \
 		   src/can_isp.c
 
 SRCS_BOOT = \
 			src/btldr.c \
 			src/can_isp.c \
-			src/can_isp_commands.c
+			src/commands.c
 
 SRCS_SHMEM = \
 			 lib/shmem.c
