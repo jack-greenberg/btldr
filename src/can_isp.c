@@ -3,40 +3,30 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <util/delay.h>
 
 #include "can_lib.h"
 #include "debug.h"
 #include "image.h"
 
 uint8_t can_isp_task(void) {
-    uint8_t st = 0;
-
     uint8_t data[CAN_MAX_MSG_LENGTH];
     can_frame_t msg = {
+        .mob = 0,
         .data = data,
-        .id = 0x00,
-        .dlc = CAN_MAX_MSG_LENGTH,
     };
 
-    can_filter_t filter = {
-        .mask = 0x00,
-        .id = 0x00,
-    };
+    int st = can_poll_receive(&msg);
 
-    // Receive CAN message. This shouldn't error because we always restore our
-    // message objects
-    (void)can_receive(&msg, filter);
-
-    do {
-    } while ((st = can_poll_receive(&msg)) == -1);
-
-    if (st == 1) {
-        log_uart("Error!");
+    if (st == -1) {
         return 0;
     }
 
-    switch (msg.id) {
+    if (st == 1) {
+        log_uart("Error!");
+        return 1;
+    }
+
+    switch (msg.id & 0xF) {
         case CAN_ID_QUERY: {
             st = handle_query(msg.data, msg.dlc);
             break;
@@ -63,7 +53,7 @@ uint8_t can_isp_task(void) {
 
             can_frame_t msg = {
                 .mob = 0,  // TODO
-                .id = CAN_ID_STATUS,
+                .id = (BTLDR_ID << 4) | CAN_ID_STATUS,
                 .data = data,
                 .dlc = 4,
             };
@@ -72,7 +62,14 @@ uint8_t can_isp_task(void) {
         }
     }
 
-    log_uart("End of loop");
+    can_filter_t filter = {
+        .mask = 0x7F0,
+        .id = BTLDR_ID << 4,
+    };
 
-    return st;
+    // Receive CAN message. This shouldn't error because we always restore our
+    // message objects
+    (void)can_receive(&msg, filter);
+
+    return (uint8_t)st;
 }

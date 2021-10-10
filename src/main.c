@@ -15,8 +15,8 @@
 #include "lib.h"
 
 #define LED0 (PD6)
-#define BLINK_DELAY (250)  // ms
-#define ISP_MOB_NUM (0x5)
+#define BLINK_DELAY (100)  // ms
+#define ISP_MOB_NUM (0x3)
 
 image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
     .image_magic = IMAGE_MAGIC,
@@ -31,23 +31,10 @@ int main(void) {
     log_uart("-- App --");
 
     can_init(BAUD_500KBPS);
-
-    updater_init(ECU_ID, ISP_MOB_NUM);
-
-    can_frame_t msg = {
-        .id = 0x01,
-        .dlc = 1,
-        .mob = 0x00,
-    };
-
-    uint8_t can_data[1] = {0x0F};
-
-    msg.data = can_data;
+    updater_init(BTLDR_ID, ISP_MOB_NUM);
 
     for (;;) {
         updater_loop();
-
-        can_send(&msg);
 
         PORTD ^= _BV(LED0);
         _delay_ms(BLINK_DELAY);

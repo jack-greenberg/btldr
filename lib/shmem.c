@@ -1,6 +1,7 @@
 #include "shmem.h"
 
 #include <avr/eeprom.h>
+#include <util/delay.h>
 
 /*
  * Bootloader version is defined as 8-bit number
@@ -39,20 +40,27 @@ static uint8_t updater_version __attribute__((section(".eeprom")))
 void bootflag_set(uint8_t flag) {
     eeprom_busy_wait();
     uint32_t flags = eeprom_read_dword(&bootflags);
-    flags |= (1 << flag);
+    _delay_ms(2);
+    flags |= flag;
     eeprom_update_dword(&bootflags, flags);
+    _delay_ms(2);
+    eeprom_busy_wait();
 }
 
 void bootflag_clear(uint8_t flag) {
     eeprom_busy_wait();
     uint32_t flags = eeprom_read_dword(&bootflags);
-    flags &= ~(1 << flag);
+    _delay_ms(2);
+    flags &= ~flag;
     eeprom_update_dword(&bootflags, flags);
+    _delay_ms(2);
+    eeprom_busy_wait();
 }
 
 bool bootflag_get(uint32_t flag) {
     eeprom_busy_wait();
     uint32_t flags = eeprom_read_dword(&bootflags);
+    _delay_ms(2);
 
     return ((flags & flag) != 0);
 }

@@ -9,15 +9,12 @@
 #include "shmem.h"
 
 static can_frame_t can_msg;
-static uint16_t fixed_ecu_id;
 
 void updater_init(uint16_t ecu_id, uint8_t mob) {
-    fixed_ecu_id = ecu_id;
-
     can_msg.mob = mob;
 
     can_filter_t filter = {
-        .id = fixed_ecu_id << 4,
+        .id = BTLDR_ID << 4,
         .mask = 0x7f0,
     };
 
@@ -47,7 +44,7 @@ static void do_query(uint8_t* data, uint8_t dlc) {
 
     memcpy((resp_data + 4), &delta_32, sizeof(delta_32));
 
-    can_msg.id = CAN_ID_QUERY_RESPONSE;
+    can_msg.id = (BTLDR_ID << 4) | CAN_ID_QUERY_RESPONSE;
     can_msg.data = resp_data;
     can_msg.dlc = 8;
 
@@ -57,13 +54,15 @@ static void do_query(uint8_t* data, uint8_t dlc) {
 void updater_loop(void) {
     int rc = can_poll_receive(&can_msg);
 
-    if ((rc == -1) || (rc == 1)) {
-        // Not ready or error
+    if (rc == -1) {
+        return;
+    } else if (rc == 1) {
+        log_uart("Error in updater loop!");
         return;
     }
 
     // What CAN ID was received
-    switch (can_msg.id) {
+    switch (can_msg.id & 0xF) {
         case CAN_ID_QUERY: {
             do_query(can_msg.data, can_msg.dlc);
         } break;
@@ -76,7 +75,7 @@ void updater_loop(void) {
     }
 
     can_filter_t filter = {
-        .id = fixed_ecu_id << 4,
+        .id = BTLDR_ID << 4,
         .mask = 0x7f0,
     };
 

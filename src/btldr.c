@@ -20,7 +20,7 @@
  * MCUSR := MCU Status Register
  */
 
-extern uint32_t bootflags;
+// extern uint32_t bootflags;
 
 int main(void) {
     cli();  // Disable interrupts in the btldr
@@ -28,10 +28,8 @@ int main(void) {
     log_init();
     log_uart("-- Bootloader --");
 
-    uint32_t flags = eeprom_read_dword(&bootflags);
-    bool update_requested = ((flags & UPDATE_REQUESTED) != 0);
-    bool image_is_valid = ((flags & IMAGE_IS_VALID) != 0);
-    // bool update_requested = bootflag_get(UPDATE_REQUESTED);
+    bool image_is_valid = bootflag_get(IMAGE_IS_VALID);
+    bool update_requested = bootflag_get(UPDATE_REQUESTED);
 
     if (!update_requested) {
         if (image_is_valid) {
@@ -43,11 +41,25 @@ int main(void) {
         } else {
             log_uart("Image is corrupted or invalid, going into updater");
         }
-    } else {
-        log_uart("Update requested, going into updater");
     }
 
     // Updater
     can_init(BAUD_500KBPS);
+
+    uint8_t data[CAN_MAX_MSG_LENGTH];
+    can_frame_t msg = {
+        .mob = 0,
+        .data = data,
+    };
+
+    can_filter_t filter = {
+        .mask = 0x7F0,
+        .id = BTLDR_ID << 4,
+    };
+
+    // Receive CAN message. This shouldn't error because we always restore our
+    // message objects
+    (void)can_receive(&msg, filter);
+
     while (1) { (void)can_isp_task(); }
 }

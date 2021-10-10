@@ -53,6 +53,10 @@ int can_send(can_frame_t* frame) {
 
     mob_enable_tx();
 
+    // Wait for successful transmission
+    // BLOCKING
+    do {} while (CANEN2 & (1 << frame->mob));
+
     return 0;
 }
 
@@ -89,4 +93,6 @@ int can_poll_receive(can_frame_t* frame) {
         // Not ready
         return -1;
     }
+
+    CANSTMOB = 0;
 }

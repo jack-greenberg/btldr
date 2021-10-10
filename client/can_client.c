@@ -93,8 +93,6 @@ int can_receive(struct CanClient* client, struct can_filter* filter,
 
     setsockopt(client->s, SOL_CAN_RAW, CAN_RAW_FILTER, filter, sizeof(filter));
 
-    log_trace("Polling receive...");
-
     if (poll(&fds, 1, timeout) < 0) {
         log_error("Failed to poll for CAN message");
         return 1;

@@ -100,12 +100,13 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
     }
 
     size_t nbytes;
-    can_msg_id = (ecu_id << 4) | CAN_ID_DATA;
 
     rfilter[0].can_id = (ecu_id << 4) | CAN_ID_STATUS;
     rfilter[0].can_mask = 0x7FF;  // Exact match
 
     while ((nbytes = fread(can_data, 1, 8, fp)) != 0) {
+        can_msg_id = (ecu_id << 4) | CAN_ID_DATA;
+
         can_send(client, can_msg_id, can_data, nbytes);
 
         rc = can_receive(client, rfilter, &can_msg_id, &can_dlc, can_data,
@@ -132,18 +133,42 @@ int cmd_flash(struct CanClient* client, uint8_t ecu_id, char* binary_path) {
         uint16_t remaining_data;
         memcpy(&remaining_data, can_data + 3, sizeof(uint16_t));
 
-        uint16_t file_remaining_data = ftell(fp);
+        uint16_t file_remaining_data = image_size - ftell(fp);
 
         if (file_remaining_data != remaining_data) {
             log_warn("Mismatch in amount of data remaining, flash may fail");
+            printf("Local remaining: %i\nRemote remaining: %i\n", file_remaining_data, remaining_data);
         } else {
-            double percent_complete
-                = (image_size - remaining_data) / image_size;
-            printf("%.2f%% complete", percent_complete);
+            double percent_complete = 100.0f 
+                * ((double)image_size - (double)remaining_data) 
+                / (double)image_size;
+            printf("\r%.2f%% complete", percent_complete);
+            fflush(stdout);
         }
     }
 
+    printf("\n");
     fclose(fp);
+
+    // Do reset
+    log_trace("Resetting target device");
+
+    can_msg_id = (ecu_id << 4) | CAN_ID_RESET;
+    can_data[0] = 0x00;
+    can_send(client, can_msg_id, can_data, 1);
+
+    // TODO need to implement "reset success message" or something
+    rc = cmd_ping(client, ecu_id, &current_image);
+    if (rc != 0) {
+        goto bail;
+    }
+    if (current_image != CURRENT_IMAGE_APP) {
+        log_error("Update failed");
+        rc = 1;
+        goto bail;
+    } else {
+        log_info("Update successful!");
+    }
 
 bail:
     return rc;
@@ -202,7 +227,8 @@ int cmd_ping(struct CanClient* client, uint8_t ecu_id, uint8_t* current_image) {
     uint8_t version_min = (version & 0x0F);
     char* chip = chip_id_to_name[recv_can_data[1]];
     *current_image = recv_can_data[2];
-    char* image_name = (current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
+
+    char* image_name = (*current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
 
     uint32_t time_delta;
     memcpy(&time_delta, recv_can_data + 4, sizeof(uint32_t));

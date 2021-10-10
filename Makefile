@@ -100,7 +100,7 @@ AVRDUDE_FLAGS = \
 
 GIT_SHA := \"$(shell git rev-parse --short HEAD)\"
 
-DEFINES += GIT_SHA=$(GIT_SHA) F_CPU=$(F_CPU)
+DEFINES += GIT_SHA=$(GIT_SHA) F_CPU=$(F_CPU) BTLDR_ID=0x01
 CFLAGS += $(foreach d,$(DEFINES),-D$(d))
 CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
 
