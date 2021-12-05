@@ -13,7 +13,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "can_client.h"
+#include "can.h"
 #include "commands.h"
 #include "log.h"
 
@@ -21,27 +21,38 @@
 #define VERSION_MIN 1
 
 char* prg;
+char* device;
 
 static void print_usage(char* prg, FILE* stream) {
     // clang-format off
     fprintf(stream, "%s - CAN software updater client    [version %i.%i]\n\n", prg, VERSION_MAJ, VERSION_MIN);
+
     fprintf(stream, "Usage: %s [options] <command> [args]\n\n", prg);
     fprintf(stream, "Options:\n");
     fprintf(stream, "    -h,--help     (display this text and exit)\n");
     fprintf(stream, "    -v,--verbose  (be verbose)\n");
     fprintf(stream, "    -V,--version  (show version)\n");
     fprintf(stream, "    -d,--device   (can device: can0, vcan0)\n\n");
+
     fprintf(stream, "Commands:\n");
     fprintf(stream, "  flash <node_id> <binary>\n");
     fprintf(stream, "  ping [-a|<node_id>]\n\n");
     // clang-format on
 }
 
-bool verbose = false;
-char* device;
-
 // Pattern seen in git source
-static int handle_args(int* argc, char*** argv) {
+static int handle_opts(int* argc, char*** argv) {
+    prg = basename((*argv)[0]);
+
+    (*argv)++;
+    (*argc)--;
+
+    if (*argc == 0) {
+        fprintf(stderr, "No command specified\n");
+        print_usage(prg, stderr);
+        exit(1);
+    }
+
     while (*argc > 0) {
         const char* cmd = (*argv)[0];
         if (cmd[0] != '-') {
@@ -53,7 +64,7 @@ static int handle_args(int* argc, char*** argv) {
             print_usage(prg, stdout);
             exit(0);
         } else if (!strcmp(cmd, "-v") || !strcmp(cmd, "--verbose")) {
-            verbose = true;
+            log_set_level(LOG_ERROR);
         } else if (!strcmp(cmd, "-d") || !strcmp(cmd, "--device")) {
             device = (*argv)[1];
             (*argc)--;
@@ -71,28 +82,16 @@ static int handle_args(int* argc, char*** argv) {
 }
 
 int main(int argc, char** argv) {
-    int rc;
-    prg = basename(argv[0]);
+    int rc = 0;
 
-    argv++;
-    argc--;
-
-    handle_args(&argc, &argv);
-
-    if (!verbose) {
-        log_set_level(LOG_ERROR);
-    } else {
-        log_info("Running in verbose mode");
-    }
-
-    if (argc == 0) {
-        printf("No command specified\n");
-        print_usage(prg, stderr);
-        exit(1);
-    }
+    handle_opts(&argc, &argv);
 
     char* cmd = argv[0];
-    struct CanClient client;
+
+    can_client_t* client = can_client_create(device);
+    if (client == NULL) {
+        goto bail;
+    }
 
     if (!strcmp(cmd, "flash")) {
         if (argc != 3) {
@@ -104,12 +103,15 @@ int main(int argc, char** argv) {
         uint8_t ecu_id = strtoul(argv[1], NULL, 16);
         char* binary_path = argv[2];
 
-        rc = init_can_client(&client);
-        if (rc != 0) {
+        // Deal with file
+        FILE* fp = fopen(binary_path, "rb");
+        if (fp == NULL) {
+            printf("File not found: %s\n", binary_path);
+            rc = 1;
             goto bail;
         }
 
-        rc = cmd_flash(&client, ecu_id, binary_path);
+        rc = cmd_flash(client, ecu_id, fp);
     } else if (!strcmp(cmd, "ping")) {
         if (argc != 2) {
             fprintf(stderr, "Wrong number of args specified\n");
@@ -119,18 +121,13 @@ int main(int argc, char** argv) {
 
         uint8_t ecu_id;
         if (!strcmp(argv[1], "-a")) {
-            ecu_id = 0xFF;
+            ecu_id = 0x7F;
         } else {
             ecu_id = strtoul(argv[1], NULL, 16);
         }
 
-        rc = init_can_client(&client);
-        if (rc != 0) {
-            goto bail;
-        }
-
         uint8_t current_image;
-        rc = cmd_ping(&client, ecu_id, &current_image);
+        rc = cmd_ping(client, ecu_id, &current_image);
     } else {
         printf("Unknown command: %s\n", cmd);
         print_usage(prg, stderr);
@@ -138,6 +135,6 @@ int main(int argc, char** argv) {
     }
 
 bail:
-    can_client_destroy(&client);
+    can_client_destroy(client);
     return rc;
 }

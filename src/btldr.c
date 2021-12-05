@@ -26,6 +26,7 @@ int main(void) {
     cli();  // Disable interrupts in the btldr
 
     log_init();
+
     log_uart("-- Bootloader --");
 
     bool image_is_valid = bootflag_get(IMAGE_IS_VALID);

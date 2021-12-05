@@ -32,8 +32,9 @@ SRCS_SHMEM = \
 
 SRCS_CLIENT = \
 			  client/main.c \
-			  client/can_client.c \
-			  client/commands.c \
+			  client/can.c \
+			  client/ping.c \
+			  client/flash.c \
 			  third_party/log/src/log.c
 
 SRCS_SHARED = \
@@ -85,6 +86,7 @@ LDFLAGS = \
 		  -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map \
 		  -static \
 		  -nostartfiles \
+		  -Wl,-u,vfprintf -lprintf_min \
 		  -T $(LDSCRIPT)
 
 EEPFLAGS = \
