@@ -25,8 +25,10 @@ typedef struct {
 /*
  * Initializes the CAN client and sockets
  *
- * Returns a pointer to a dynamically-allocated can_client_t or else NULL if it
+ * Returns a pointer to a statically-allocated can_client_t or else NULL if it
  * fails
+ *
+ * Should only be called once
  */
 can_client_t* can_client_create(char* if_device);
 
@@ -34,14 +36,14 @@ can_client_t* can_client_create(char* if_device);
  * Deinitializes the CAN client, closing the socket and freeing the dynamic
  * memory
  */
-void can_client_destroy(can_client_t* client);
+void can_client_destroy(void);
 
 /*
  * Sends a single CAN message with an ID, data, and data length (dlc)
  *
  * Returns 0 if successful, 1 if error
  */
-int can_send(can_client_t* client, uint16_t id, uint8_t* data, uint8_t dlc);
+int can_send(uint16_t id, uint8_t* data, uint8_t dlc);
 
 /*
  * Receives a CAN message.
@@ -56,5 +58,5 @@ int can_send(can_client_t* client, uint16_t id, uint8_t* data, uint8_t dlc);
  *   1 if error
  *   -1 if message not received
  */
-int can_receive(can_client_t* client, struct can_filter* filter,
+int can_receive(struct can_filter* filter,
                 uint16_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout);

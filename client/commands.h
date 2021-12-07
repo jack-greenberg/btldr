@@ -24,9 +24,9 @@
 /*
  * Pings a CAN device
  */
-int cmd_ping(can_client_t* client, uint8_t ecu_id, uint8_t* current_image);
+int cmd_ping(uint8_t ecu_id, uint8_t* current_image);
 
 /*
  * Flashes a binary
  */
-int cmd_flash(can_client_t* client, uint8_t ecu_id, FILE* fp);
+int cmd_flash(uint8_t ecu_id, FILE* fp);

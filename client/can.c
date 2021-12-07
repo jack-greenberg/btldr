@@ -19,66 +19,73 @@
 
 #include "log.h"
 
+static can_client_t client;
+
 can_client_t* can_client_create(char* if_device) {
-    can_client_t* client = calloc(1, sizeof(can_client_t));
-    if (client == NULL) {
-        return NULL;
-    }
-
-    // Open a socket to write to
-    if ((client->s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+    if ((client.s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
         log_error("Couldn't open socket");
+        perror("socket() failed");
         return NULL;
     }
-    log_info("Socket opened successfully");
-    client->addr.can_family = AF_CAN;
 
-    // Set up the device and connect the socket to it
-    strncpy(client->ifr.ifr_name, if_device, IFNAMSIZ - 1);
-    client->ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-    if (ioctl(client->s, SIOCGIFINDEX, &client->ifr) < 0) {
-        log_error("Failed to find device %s", client->ifr.ifr_name);
+    log_info("Socket opened successfully");
+    client.addr.can_family = AF_CAN;
+
+    // Set up the Linux device name (i.e. vcan0, can0) and connect the socket
+    // to it
+    strncpy(client.ifr.ifr_name, if_device, IFNAMSIZ - 1);
+    client.ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+
+    if (ioctl(client.s, SIOCGIFINDEX, &client.ifr) < 0) {
+        log_error("Failed to find device %s", client.ifr.ifr_name);
+        perror("ioctl() failed");
         return NULL;
     }
-    log_info("Found device %s", client->ifr.ifr_name);
-    client->addr.can_ifindex = client->ifr.ifr_ifindex;
+
+    client.addr.can_ifindex = client.ifr.ifr_ifindex;
 
     // Set up max transmission unit (mtu)
-    if (ioctl(client->s, SIOCGIFMTU, &client->ifr) < 0) {
+    // "Maximum transmission unit (MTU) determines the maximum payload size of a
+    // packet that is sent."
+    if (ioctl(client.s, SIOCGIFMTU, &client.ifr) < 0) {
         log_error("CAN message won't fit in socket");
+        perror("ioctl() failed");
         return NULL;
     }
 
     // After the socket is initialized and the device is found, we bind to the
-    // socket to enable us to write to it
-    if (bind(client->s, (struct sockaddr*)&client->addr, sizeof(client->addr))
+    // socket to enable us to read and write to it. `bind` could fail if the
+    // port is already in use.
+    if (bind(client.s, (struct sockaddr*)&client.addr, sizeof(client.addr))
         < 0) {
         log_error("Failed to bind to socket");
+        perror("bind() failed");
         return NULL;
     }
     log_info("Successfully binded to socket");
 
-    return client;
+    return &client;
 }
 
-int can_send(can_client_t* client, uint16_t id, uint8_t* data, uint8_t dlc) {
+int can_send(uint16_t id, uint8_t* data, uint8_t dlc) {
     // IDs are 11-bits, so enforce that limit
-    client->frame.can_id = id & 0x7FF;
+    client.frame.can_id = id & 0x7FF;
 
     // DLC is at most 8
     if (dlc > 8) {
         dlc = 8;
     }
 
-    client->frame.can_dlc = dlc;
-    memcpy(client->frame.data, data, dlc);
+    client.frame.can_dlc = dlc;
+    memcpy(client.frame.data, data, dlc);
 
     // Write to the socket to send the message
-    int nbytes = write(client->s, &client->frame, sizeof(struct can_frame));
+    int nbytes = write(client.s, &client.frame, sizeof(struct can_frame));
 
     if (nbytes < 0) {
         log_error("Failed to send CAN message with DLC %i and ID 0x%X", dlc,
                   id);
+        perror("write() failed");
         return 1;
     }
 
@@ -89,21 +96,22 @@ int can_send(can_client_t* client, uint16_t id, uint8_t* data, uint8_t dlc) {
     return 0;
 }
 
-int can_receive(can_client_t* client, struct can_filter* filter,
+int can_receive(struct can_filter* filter,
                 uint16_t* can_id, uint8_t* can_dlc, uint8_t* data,
                 int timeout) {
     // Set up socket to receive the CAN message
-    setsockopt(client->s, SOL_CAN_RAW, CAN_RAW_FILTER, filter, sizeof(filter));
+    setsockopt(client.s, SOL_CAN_RAW, CAN_RAW_FILTER, filter, sizeof(filter));
 
     // Sets up polling interface
     struct pollfd fds = {
-        .fd = client->s,
+        .fd = client.s,
         .events = POLLIN,
     };
 
     // Poll for the specified amount of time
     if (poll(&fds, 1, timeout) < 0) {
         log_error("Failed to poll for CAN message");
+        perror("poll() failed");
         return 1;
     }
 
@@ -113,27 +121,27 @@ int can_receive(can_client_t* client, struct can_filter* filter,
     }
 
     // Poll was successful, so read from the socket
-    int nbytes = read(client->s, &client->frame, sizeof(struct can_frame));
+    int nbytes = read(client.s, &client.frame, sizeof(struct can_frame));
     if (nbytes < 0) {
         log_error("Failed to read CAN message");
+        perror("read() failed");
         return 1;
     }
 
     // Fill in the appropriate data
-    *can_id = client->frame.can_id;
-    *can_dlc = client->frame.can_dlc;
-    memcpy(data, client->frame.data, client->frame.can_dlc);
+    *can_id = client.frame.can_id;
+    *can_dlc = client.frame.can_dlc;
+    memcpy(data, client.frame.data, client.frame.can_dlc);
 
     return 0;
 }
 
-void can_client_destroy(can_client_t* client) {
+void can_client_destroy(void) {
     static int i = 0;
 
     // Will only happen once
     if (i == 0) {
-        close(client->s);
-        free(client);
+        close(client.s);
         i++;
     }
 }

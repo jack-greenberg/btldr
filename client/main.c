@@ -64,7 +64,7 @@ static int handle_opts(int* argc, char*** argv) {
             print_usage(prg, stdout);
             exit(0);
         } else if (!strcmp(cmd, "-v") || !strcmp(cmd, "--verbose")) {
-            log_set_level(LOG_ERROR);
+            log_set_level(LOG_INFO);
         } else if (!strcmp(cmd, "-d") || !strcmp(cmd, "--device")) {
             device = (*argv)[1];
             (*argc)--;
@@ -84,6 +84,7 @@ static int handle_opts(int* argc, char*** argv) {
 int main(int argc, char** argv) {
     int rc = 0;
 
+    log_set_level(LOG_ERROR);
     handle_opts(&argc, &argv);
 
     char* cmd = argv[0];
@@ -111,7 +112,7 @@ int main(int argc, char** argv) {
             goto bail;
         }
 
-        rc = cmd_flash(client, ecu_id, fp);
+        rc = cmd_flash(ecu_id, fp);
     } else if (!strcmp(cmd, "ping")) {
         if (argc != 2) {
             fprintf(stderr, "Wrong number of args specified\n");
@@ -127,7 +128,7 @@ int main(int argc, char** argv) {
         }
 
         uint8_t current_image;
-        rc = cmd_ping(client, ecu_id, &current_image);
+        rc = cmd_ping(ecu_id, &current_image);
     } else {
         printf("Unknown command: %s\n", cmd);
         print_usage(prg, stderr);
@@ -135,6 +136,6 @@ int main(int argc, char** argv) {
     }
 
 bail:
-    can_client_destroy(client);
+    can_client_destroy();
     return rc;
 }

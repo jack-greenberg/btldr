@@ -49,7 +49,7 @@ static void ping_print_response(struct ping_response resp) {
            resp.ecu_id, mcu, version_maj, version_min, current_image, flash_time);
 }
 
-int cmd_ping(can_client_t* client, uint8_t ecu_id, uint8_t* current_image) {
+int cmd_ping(uint8_t ecu_id, uint8_t* current_image) {
     int rc = 0;
 
     // Receive response
@@ -80,12 +80,12 @@ int cmd_ping(can_client_t* client, uint8_t ecu_id, uint8_t* current_image) {
         uint8_t can_time[8];
         memcpy(can_time, &current_time, sizeof(uint64_t));
 
-        rc = can_send(client, can_id, can_time, sizeof(uint64_t));
+        rc = can_send(can_id, can_time, sizeof(uint64_t));
         if (rc != 0) {
             goto bail;
         }
 
-        rc = can_receive(client, rfilter, &recv_can_id, &recv_can_dlc,
+        rc = can_receive(rfilter, &recv_can_id, &recv_can_dlc,
                          (uint8_t*)recv_can_data, POLLTIMEOUT);
         printf("PING 0x%X\n", can_id);
         num_tries++;
