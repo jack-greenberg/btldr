@@ -7,6 +7,48 @@ char* chip_id_to_name[4] = {
     [CHIP_ARM_STM32F103C8T6] = "stm32f103c8t6",
 };
 
+struct ping_response {
+    uint8_t version;
+    uint8_t ecu_id;
+    uint8_t mcu;
+    uint8_t current_image;
+    struct tm flash_time;
+};
+
+static struct ping_response ping_unpack_response(uint64_t current_time, uint8_t ecu_id, uint8_t* data) {
+    struct ping_response pr;
+
+    pr.version = data[0];
+    pr.ecu_id = ecu_id;
+    pr.mcu = data[1];
+    pr.current_image = data[2];
+
+    uint32_t time_delta;
+    memcpy(&time_delta, data + 4, sizeof(uint32_t));
+
+    const time_t timer = current_time - time_delta;
+    struct tm flash_time;
+    gmtime_r(&timer, &flash_time);
+
+    pr.flash_time = flash_time;
+    
+    return pr;
+}
+
+static void ping_print_response(struct ping_response resp) {
+    char* mcu = chip_id_to_name[resp.mcu];
+    char* current_image = (resp.current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
+
+    uint8_t version_maj = (resp.version & 0xF0) >> 4;
+    uint8_t version_min = (resp.version & 0x0F);
+
+    char flash_time[64];
+    (void)strftime(flash_time, 64, "%x %H:%M", &resp.flash_time);
+
+    printf("PING 8 bytes from 0x%X: chip=%s version=%i.%i image=%s flashed=%s\n",
+           resp.ecu_id, mcu, version_maj, version_min, current_image, flash_time);
+}
+
 int cmd_ping(can_client_t* client, uint8_t ecu_id, uint8_t* current_image) {
     int rc = 0;
 
@@ -59,27 +101,8 @@ int cmd_ping(can_client_t* client, uint8_t ecu_id, uint8_t* current_image) {
         goto bail;
     }
 
-    // TODO match received ID to board somehow?
-    uint8_t version = recv_can_data[0];
-    uint8_t version_maj = (version & 0xF0) >> 4;
-    uint8_t version_min = (version & 0x0F);
-    char* chip = chip_id_to_name[recv_can_data[1]];
-    *current_image = recv_can_data[2];
-
-    char* image_name = (*current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
-
-    uint32_t time_delta;
-    memcpy(&time_delta, recv_can_data + 4, sizeof(uint32_t));
-
-    const time_t timer = current_time - time_delta;
-    struct tm flash_time;
-    (void)gmtime_r(&timer, &flash_time);
-
-    char flash_time_str[64];
-    (void)strftime(flash_time_str, 64, "%x %H:%M", &flash_time);
-
-    printf("PING 8 bytes from 0x%X: chip=%s version=%i.%i image=%s flashed=%s\n",
-           ecu_id, chip, version_maj, version_min, image_name, flash_time_str);
+    struct ping_response resp = ping_unpack_response(current_time, ecu_id, recv_can_data);
+    ping_print_response(resp);
 
 bail:
     return rc;

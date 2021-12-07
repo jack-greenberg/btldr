@@ -140,7 +140,7 @@ $(BUILD_DIR)/$(APP).elf: $(SRCS_APP)
 
 patch_header: scripts/patch_header.c
 	@mkdir -p $(BUILD_DIR)
-	gcc -DDEBUG -Ilib -Wall -o $(BUILD_DIR)/$@ $^ lib/crc32.c
+	gcc -Ilib -Wall -o $(BUILD_DIR)/$@ $^ lib/crc32.c
 
 flash: $(BUILD_DIR)/$(APP).bin $(BUILD_DIR)/$(PROJECT).hex $(BUILD_DIR)/$(PROJECT).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) \
