@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "client.h"
 
 char* chip_id_to_name[4] = {
     [CHIP_NONE] = "unknown",
@@ -7,15 +7,9 @@ char* chip_id_to_name[4] = {
     [CHIP_ARM_STM32F103C8T6] = "stm32f103c8t6",
 };
 
-struct ping_response {
-    uint8_t version;
-    uint8_t ecu_id;
-    uint8_t mcu;
-    uint8_t current_image;
-    struct tm flash_time;
-};
-
-static struct ping_response ping_unpack_response(uint64_t current_time, uint8_t ecu_id, uint8_t* data) {
+static struct ping_response ping_unpack_response(uint64_t current_time,
+                                                 uint8_t ecu_id,
+                                                 uint8_t* data) {
     struct ping_response pr;
 
     pr.version = data[0];
@@ -31,13 +25,14 @@ static struct ping_response ping_unpack_response(uint64_t current_time, uint8_t 
     gmtime_r(&timer, &flash_time);
 
     pr.flash_time = flash_time;
-    
+
     return pr;
 }
 
-static void ping_print_response(struct ping_response resp) {
+void ping_print_response(struct ping_response resp) {
     char* mcu = chip_id_to_name[resp.mcu];
-    char* current_image = (resp.current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
+    char* current_image
+        = (resp.current_image == CURRENT_IMAGE_APP) ? "app" : "updater";
 
     uint8_t version_maj = (resp.version & 0xF0) >> 4;
     uint8_t version_min = (resp.version & 0x0F);
@@ -45,11 +40,12 @@ static void ping_print_response(struct ping_response resp) {
     char flash_time[64];
     (void)strftime(flash_time, 64, "%x %H:%M", &resp.flash_time);
 
-    printf("PING 8 bytes from 0x%X: chip=%s version=%i.%i image=%s flashed=%s\n",
-           resp.ecu_id, mcu, version_maj, version_min, current_image, flash_time);
+    printf(
+        "PING 8 bytes from 0x%X: chip=%s version=%i.%i image=%s flashed=%s\n",
+        resp.ecu_id, mcu, version_maj, version_min, current_image, flash_time);
 }
 
-int cmd_ping(uint8_t ecu_id, uint8_t* current_image) {
+int cmd_ping(uint8_t ecu_id, struct ping_response* response) {
     int rc = 0;
 
     // Receive response
@@ -87,22 +83,22 @@ int cmd_ping(uint8_t ecu_id, uint8_t* current_image) {
 
         rc = can_receive(rfilter, &recv_can_id, &recv_can_dlc,
                          (uint8_t*)recv_can_data, POLLTIMEOUT);
+        // if verbose
         printf("PING 0x%X\n", can_id);
+        // endif
         num_tries++;
     } while ((rc == -1) && (num_tries < MAX_RETRIES));
 
     if ((num_tries == MAX_RETRIES) && (rc == -1)) {
-        printf("Failed to receive ping response. Device unreachable.\n");
+        fprintf(stderr, "Failed to receive ping response. Device unreachable.\n");
         rc = 2;  // timeout
         goto bail;
     }
 
-    if (rc != 0) {
-        goto bail;
+    if (rc == 0) {
+        *response = ping_unpack_response(current_time, ecu_id, recv_can_data);
     }
 
-    struct ping_response resp = ping_unpack_response(current_time, ecu_id, recv_can_data);
-    ping_print_response(resp);
 
 bail:
     return rc;

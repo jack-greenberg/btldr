@@ -55,7 +55,8 @@ int can_send(can_frame_t* frame) {
 
     // Wait for successful transmission
     // BLOCKING
-    do {} while (CANEN2 & (1 << frame->mob));
+    do {
+    } while (CANEN2 & (1 << frame->mob));
 
     return 0;
 }

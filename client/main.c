@@ -14,14 +14,14 @@
 #include <unistd.h>
 
 #include "can.h"
-#include "commands.h"
+#include "client.h"
 #include "log.h"
 
 #define VERSION_MAJ 0
 #define VERSION_MIN 1
 
 char* prg;
-char* device;
+char* device = "can0";
 
 static void print_usage(char* prg, FILE* stream) {
     // clang-format off
@@ -32,11 +32,21 @@ static void print_usage(char* prg, FILE* stream) {
     fprintf(stream, "    -h,--help     (display this text and exit)\n");
     fprintf(stream, "    -v,--verbose  (be verbose)\n");
     fprintf(stream, "    -V,--version  (show version)\n");
-    fprintf(stream, "    -d,--device   (can device: can0, vcan0)\n\n");
+    fprintf(stream, "    -d,--device   (can device: can0 (default), vcan0)\n\n");
 
     fprintf(stream, "Commands:\n");
     fprintf(stream, "  flash <node_id> <binary>\n");
     fprintf(stream, "  ping [-a|<node_id>]\n\n");
+
+    fprintf(stream, "Examples:\n");
+    fprintf(stream, "  updatr ping -a\n");
+    fprintf(stream, "      Ping all devices on the network\n\n");
+
+    fprintf(stream, "  updatr ping 0x43\n");
+    fprintf(stream, "      Ping device with ID 0x43\n\n");
+
+    fprintf(stream, "  updatr flash 0x43 build/main.bin\n");
+    fprintf(stream, "      Flash the ECU with ID 0x43 with the main.bin file\n");
     // clang-format on
 }
 
@@ -66,6 +76,11 @@ static int handle_opts(int* argc, char*** argv) {
         } else if (!strcmp(cmd, "-v") || !strcmp(cmd, "--verbose")) {
             log_set_level(LOG_INFO);
         } else if (!strcmp(cmd, "-d") || !strcmp(cmd, "--device")) {
+            if (*argc < 2) {
+                fprintf(stderr, "No device specified\n");
+                print_usage(prg, stderr);
+                exit(1);
+            }
             device = (*argv)[1];
             (*argc)--;
             (*argv)++;
@@ -89,8 +104,8 @@ int main(int argc, char** argv) {
 
     char* cmd = argv[0];
 
-    can_client_t* client = can_client_create(device);
-    if (client == NULL) {
+    rc = can_client_create(device);
+    if (rc > 0) {
         goto bail;
     }
 
@@ -107,7 +122,7 @@ int main(int argc, char** argv) {
         // Deal with file
         FILE* fp = fopen(binary_path, "rb");
         if (fp == NULL) {
-            printf("File not found: %s\n", binary_path);
+            perror("Couldn't flash");
             rc = 1;
             goto bail;
         }
@@ -127,8 +142,9 @@ int main(int argc, char** argv) {
             ecu_id = strtoul(argv[1], NULL, 16);
         }
 
-        uint8_t current_image;
-        rc = cmd_ping(ecu_id, &current_image);
+        struct ping_response r;
+        rc = cmd_ping(ecu_id, &r);
+        ping_print_response(r);
     } else {
         printf("Unknown command: %s\n", cmd);
         print_usage(prg, stderr);

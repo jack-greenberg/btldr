@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "client.h"
 
 int cmd_flash(uint8_t ecu_id, FILE* fp) {
     int rc = 0;
@@ -8,8 +8,8 @@ int cmd_flash(uint8_t ecu_id, FILE* fp) {
     uint8_t can_dlc;
 
     // Find device in app
-    uint8_t current_image;
-    rc = cmd_ping(ecu_id, &current_image);
+    struct ping_response ping;
+    rc = cmd_ping(ecu_id, &ping);
     if (rc != 0) {
         goto bail;
     }
@@ -21,11 +21,11 @@ int cmd_flash(uint8_t ecu_id, FILE* fp) {
     can_send(can_msg_id, can_data, 1);
 
     // Find device again
-    rc = cmd_ping(ecu_id, &current_image);
+    rc = cmd_ping(ecu_id, &ping);
     if (rc != 0) {
         goto bail;
     }
-    if (current_image != CURRENT_IMAGE_UPDATER) {
+    if (ping.current_image != CURRENT_IMAGE_UPDATER) {
         log_error("Device was not able to be placed in updater");
         rc = 1;
         goto bail;
@@ -102,11 +102,12 @@ int cmd_flash(uint8_t ecu_id, FILE* fp) {
 
         if (file_remaining_data != remaining_data) {
             log_warn("Mismatch in amount of data remaining, flash may fail");
-            printf("Local remaining: %i\nRemote remaining: %i\n", file_remaining_data, remaining_data);
+            printf("Local remaining: %i\nRemote remaining: %i\n",
+                   file_remaining_data, remaining_data);
         } else {
-            double percent_complete = 100.0f 
-                * ((double)image_size - (double)remaining_data) 
-                / (double)image_size;
+            double percent_complete
+                = 100.0f * ((double)image_size - (double)remaining_data)
+                  / (double)image_size;
             printf("\r%.2f%% complete", percent_complete);
             fflush(stdout);
         }
@@ -123,11 +124,11 @@ int cmd_flash(uint8_t ecu_id, FILE* fp) {
     can_send(can_msg_id, can_data, 1);
 
     // TODO need to implement "reset success message" or something
-    rc = cmd_ping(ecu_id, &current_image);
+    rc = cmd_ping(ecu_id, &ping);
     if (rc != 0) {
         goto bail;
     }
-    if (current_image != CURRENT_IMAGE_APP) {
+    if (ping.current_image != CURRENT_IMAGE_APP) {
         log_error("Update failed");
         rc = 1;
         goto bail;

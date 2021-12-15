@@ -16,7 +16,7 @@ void flash_write(uint8_t* data, uint8_t length, uint16_t* current_addr) {
 
         // Accounts for odd number of data bytes. Only use i+1 if it exists
         if (i + 1 < length) {
-            wr_data += data[i+1] << 8;
+            wr_data += data[i + 1] << 8;
         }
 
         boot_page_fill_safe(buf_address, wr_data);
@@ -25,7 +25,6 @@ void flash_write(uint8_t* data, uint8_t length, uint16_t* current_addr) {
 
     // If the buffer is full
     if (buf_address % SPM_PAGESIZE == 0) {
-
         // Must erase the page before writing
         boot_page_erase_safe(*current_addr);
         boot_spm_busy_wait();

@@ -5,22 +5,19 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-typedef struct {
-    // socket instance
-    int s;
-    
-    // message transfer unit (size of can frame)
-    int mtu;
-
-    // CAN address
-    struct sockaddr_can addr;
-
-    // CAN frame
-    struct can_frame frame;
-
-    // IF device instance
-    struct ifreq ifr;
-} can_client_t;
+// typedef struct {
+//     // socket instance
+//     int s;
+//
+//     // CAN address
+//     struct sockaddr_can addr;
+//
+//     // CAN frame
+//     struct can_frame frame;
+//
+//     // IF device instance
+//     struct ifreq ifr;
+// } can_client_t;
 
 /*
  * Initializes the CAN client and sockets
@@ -30,7 +27,7 @@ typedef struct {
  *
  * Should only be called once
  */
-can_client_t* can_client_create(char* if_device);
+int can_client_create(char* if_device);
 
 /*
  * Deinitializes the CAN client, closing the socket and freeing the dynamic
@@ -58,5 +55,5 @@ int can_send(uint16_t id, uint8_t* data, uint8_t dlc);
  *   1 if error
  *   -1 if message not received
  */
-int can_receive(struct can_filter* filter,
-                uint16_t* can_id, uint8_t* can_dlc, uint8_t* data, int timeout);
+int can_receive(struct can_filter* filter, uint16_t* can_id, uint8_t* can_dlc,
+                uint8_t* data, int timeout);

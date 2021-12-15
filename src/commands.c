@@ -1,5 +1,5 @@
-#include <avr/io.h>
 #include <avr/boot.h>
+#include <avr/io.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
